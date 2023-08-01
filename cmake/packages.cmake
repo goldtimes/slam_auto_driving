@@ -1,8 +1,10 @@
 # 引入该目录下的.cmake文件
 message("PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR}")
+# 增加了cmake的搜索文件.cmake
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # livox ros driver
+# 所以这里会在build下面生成devel？但这里应该还没有生成消息
 add_subdirectory(thirdparty/livox_ros_driver)
 include_directories(${CMAKE_BINARY_DIR}/devel/include) # 引用ros生成的msg header
 
