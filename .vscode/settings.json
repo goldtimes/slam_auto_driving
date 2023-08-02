@@ -1,4 +1,7 @@
 {
     "editor.formatOnSave": true,
-    "clang-format.executable": "/usr/bin/clang-format-7"
+    "clang-format.executable": "/usr/bin/clang-format-7",
+    "files.associations": {
+        "thread": "cpp"
+    }
 }

@@ -64,8 +64,14 @@ class PangolinWindowImpl {
     // text
     pangolin::GlText gltext_label_global_;
 
+    // data logger
+    pangolin::DataLog log_vel_;
+    pangolin::DataLog log_vel_baselink_;
+    pangolin::DataLog log_bias_acc_;
+    pangolin::DataLog log_bias_gyr_;
+
     std::unique_ptr<pangolin::Plotter> plotter_vel_ = nullptr;
-    std::unique_ptr<pangolin::Plotter> plotter_vel_base_link_ = nullptr;
+    std::unique_ptr<pangolin::Plotter> plotter_vel_baselink_ = nullptr;
     std::unique_ptr<pangolin::Plotter> plotter_bias_acc_ = nullptr;
     std::unique_ptr<pangolin::Plotter> plotter_bias_gyr_ = nullptr;
 };
