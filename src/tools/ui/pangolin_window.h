@@ -4,6 +4,7 @@
 #include <eigen3/Eigen/Dense>
 #include <map>
 #include <memory>
+#include "common/nav_state.h"
 
 namespace lh::ui {
 class PangolinWindowImpl;
@@ -21,6 +22,9 @@ class PangolinWindow {
 
     /// 用户是否已经退出UI
     bool ShouldQuit();
+
+    // 更新kalman滤波状态
+    void UpdateNavState(const NavStated& state);
 
    private:
     // ...

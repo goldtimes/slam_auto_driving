@@ -15,6 +15,8 @@ bool PangolinWindowImpl::Init() {
     AllocateBuffer();  // opengl buffer;
     pangolin::GetBoundWindow()->RemoveCurrent();
 
+    traj_lidarloc_ui_.reset(new ui::UiTrajectory(Vec3f(1.0, 0.0, 0.0)));  // 红色
+
     log_vel_.SetLabels(std::vector<std::string>{"vel_x", "vel_y", "vel_z"});
     log_vel_baselink_.SetLabels(std::vector<std::string>{"baselink_vel_x", "baselink_vel_y", "baselink_vel_z"});
     log_bias_acc_.SetLabels(std::vector<std::string>{"ba_x", "ba_y", "ba_z"});
@@ -25,7 +27,37 @@ bool PangolinWindowImpl::DeInit() {
     ReleaseBuffer();
     return true;
 }
-void PangolinWindowImpl::DrawAll() {}
+void PangolinWindowImpl::DrawAll() {
+    traj_lidarloc_ui_->Render();
+    // 文字
+    RenderLabels();
+}
+
+void PangolinWindowImpl::RenderClouds() {
+    UpdateState();
+    DrawAll();
+}
+
+bool PangolinWindowImpl::UpdateState() {
+    if (kf_result_need_update_.load() == false)
+        return false;
+    std::lock_guard<std::mutex> lock(mtx_nav_state_);
+    Vec3d pos = pose_.translation().eval();
+    Vec3d vel_baselink = pose_.so3().inverse() * vel_;
+    double roll = pose_.angleX();
+    double pitch = pose_.angleY();
+    double yaw = pose_.angleZ();
+
+    log_vel_.Log(vel_(0), vel_(1), vel_(2));
+    log_vel_baselink_.Log(vel_baselink(0), vel_baselink(1), vel_baselink(2));
+    log_bias_acc_.Log(bias_acc_(0), bias_acc_(1), bias_acc_(2));
+    log_bias_gyr_.Log(bias_gyr_(0), bias_gyr_(1), bias_gyr_(2));
+
+    current_pose_ = pose_;
+    traj_lidarloc_ui_->AddPose(current_pose_);
+    kf_result_need_update_.store(false);
+    return false;
+}
 
 void PangolinWindowImpl::RenderLabels() {
     // 定位状态标识，显示在3D窗口中
@@ -80,6 +112,8 @@ void PangolinWindowImpl::Render() {
         glClearColor(255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Render
+        RenderClouds();
         // menu control
         // Swap frames and Process Events
         pangolin::FinishFrame();
