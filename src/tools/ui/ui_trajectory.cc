@@ -13,6 +13,7 @@ void UiTrajectory::AddPose(const SE3& pose) {
 
 void UiTrajectory::Render() {
     if (!vbo_.IsValid()) {
+        std::cerr << "!vbo_.IsValid()" << std::endl;
         return;
     }
 

@@ -9,6 +9,7 @@
 #include <string>
 #include <thread>
 #include "common/eigen_sophus.h"
+#include "tools/ui/ui_car.h"
 #include "tools/ui/ui_trajectory.h"
 
 namespace lh::ui {
@@ -96,6 +97,11 @@ class PangolinWindowImpl {
     std::unique_ptr<pangolin::Plotter> plotter_bias_gyr_ = nullptr;
     // 轨迹
     std::shared_ptr<ui::UiTrajectory> traj_lidarloc_ui_ = nullptr;
+
+    // camera
+    pangolin::OpenGlRenderState s_cam_main_;
+    /// cloud rendering
+    ui::UiCar car_{Vec3f(0.2, 0.2, 0.8)};
 };
 }  // namespace lh::ui
 

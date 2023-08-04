@@ -13,7 +13,9 @@
                 "${workspaceFolder}/thirdparty/sophus",
                 "/usr/include/eigen3",
                 "/usr/include/opencv4",
-                "/usr/include"
+                "/usr/include",
+                "/usr/include/x86_64-linux-gnu/c++/9",
+                "${workspaceFolder}/src"
             ]
         }
     ],

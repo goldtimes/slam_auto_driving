@@ -15,7 +15,7 @@ bool PangolinWindowImpl::Init() {
     AllocateBuffer();  // opengl buffer;
     pangolin::GetBoundWindow()->RemoveCurrent();
 
-    traj_lidarloc_ui_.reset(new ui::UiTrajectory(Vec3f(1.0, 0.0, 0.0)));  // 红色
+    traj_lidarloc_ui_.reset(new UiTrajectory(Vec3f(1.0, 0.0, 0.0)));  // 红色
 
     log_vel_.SetLabels(std::vector<std::string>{"vel_x", "vel_y", "vel_z"});
     log_vel_baselink_.SetLabels(std::vector<std::string>{"baselink_vel_x", "baselink_vel_y", "baselink_vel_z"});
@@ -27,19 +27,9 @@ bool PangolinWindowImpl::DeInit() {
     ReleaseBuffer();
     return true;
 }
-void PangolinWindowImpl::DrawAll() {
-    traj_lidarloc_ui_->Render();
-    // 文字
-    RenderLabels();
-}
-
-void PangolinWindowImpl::RenderClouds() {
-    UpdateState();
-    DrawAll();
-}
 
 bool PangolinWindowImpl::UpdateState() {
-    if (kf_result_need_update_.load() == false)
+    if (!kf_result_need_update_.load())
         return false;
     std::lock_guard<std::mutex> lock(mtx_nav_state_);
     Vec3d pos = pose_.translation().eval();
@@ -59,10 +49,26 @@ bool PangolinWindowImpl::UpdateState() {
     return false;
 }
 
+void PangolinWindowImpl::DrawAll() {
+    traj_lidarloc_ui_->Render();
+    // 车
+    car_.SetPose(current_pose_);  // 车在current pose上
+    car_.Render();
+    // 文字
+    RenderLabels();
+}
+
+void PangolinWindowImpl::RenderClouds() {
+    UpdateState();
+    // 绘制
+    pangolin::Display(dis_3d_main_name_).Activate(s_cam_main_);
+    DrawAll();
+}
+
 void PangolinWindowImpl::RenderLabels() {
     // 定位状态标识，显示在3D窗口中
     auto &d_cam3d_main = pangolin::Display(dis_3d_main_name_);
-    // d_cam3d_main.Activate(s_cam_main_);
+    d_cam3d_main.Activate(s_cam_main_);
     const auto cur_width = d_cam3d_main.v.w;
     const auto cur_height = d_cam3d_main.v.h;
 
@@ -89,54 +95,21 @@ void PangolinWindowImpl::RenderLabels() {
     glPopMatrix();
 }
 
-void PangolinWindowImpl::Render() {
-    // fetch the context and bind it to this thread
-    pangolin::BindToContext(win_name_);
-
-    // Issue specific OpenGl we might need
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // menu
-    pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(menu_width_));
-    pangolin::Var<bool> menu_follow_loc("menu.Follow", false, true);
-    pangolin::Var<bool> menu_reset_3d_view("menu.Reset 3D View", false, false);
-    pangolin::Var<bool> menu_reset_front_view("menu.Set to front View", false, false);
-    // display layout
-    CreateDisplayLayout();
-    exit_flag_.store(false);
-
-    while (!pangolin::ShouldQuit() && !exit_flag_) {
-        // Clear entire screen
-        glClearColor(255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Render
-        RenderClouds();
-        // menu control
-        // Swap frames and Process Events
-        pangolin::FinishFrame();
-    }
-    // unset the current context from the main thread
-    pangolin::GetBoundWindow()->RemoveCurrent();
-}
-
 void PangolinWindowImpl::CreateDisplayLayout() {  // define camera render object (for view / scene browsing)
     auto proj_mat_main = pangolin::ProjectionMatrix(win_width_, win_width_, cam_focus_, cam_focus_, win_width_ / 2,
                                                     win_width_ / 2, cam_z_near_, cam_z_far_);
     auto model_view_main = pangolin::ModelViewLookAt(0, 0, 1000, 0, 0, 0, pangolin::AxisY);
-    // s_cam_main_ = pangolin::OpenGlRenderState(std::move(proj_mat_main), std::move(model_view_main));
+    s_cam_main_ = pangolin::OpenGlRenderState(std::move(proj_mat_main), std::move(model_view_main));
 
     // Add named OpenGL viewport to window and provide 3D Handler
-    // pangolin::View &d_cam3d_main = pangolin::Display(dis_3d_main_name_)
-    //                                    .SetBounds(0.0, 1.0, 0.0, 1.0)
-    //                                    .SetHandler(new pangolin::Handler3D(s_cam_main_));
+    pangolin::View &d_cam3d_main = pangolin::Display(dis_3d_main_name_)
+                                       .SetBounds(0.0, 1.0, 0.0, 1.0)
+                                       .SetHandler(new pangolin::Handler3D(s_cam_main_));
 
-    // pangolin::View &d_cam3d = pangolin::Display(dis_3d_name_)
-    //                               .SetBounds(0.0, 1.0, 0.0, 0.75)
-    //                               .SetLayout(pangolin::LayoutOverlay)
-    //                               .AddDisplay(d_cam3d_main);
+    pangolin::View &d_cam3d = pangolin::Display(dis_3d_name_)
+                                  .SetBounds(0.0, 1.0, 0.0, 0.75)
+                                  .SetLayout(pangolin::LayoutOverlay)
+                                  .AddDisplay(d_cam3d_main);
 
     // OpenGL 'view' of data. We might have many views of the same data.
     plotter_vel_ = std::make_unique<pangolin::Plotter>(&log_vel_, -10, 600, -11, 11, 75, 2);
@@ -166,8 +139,49 @@ void PangolinWindowImpl::CreateDisplayLayout() {  // define camera render object
 
     pangolin::Display(dis_main_name_)
         .SetBounds(0.0, 1.0, pangolin::Attach::Pix(menu_width_), 1.0)
-        // .AddDisplay(d_cam3d)
+        .AddDisplay(d_cam3d)
         .AddDisplay(d_plot);
+}
+
+void PangolinWindowImpl::Render() {
+    // fetch the context and bind it to this thread
+    pangolin::BindToContext(win_name_);
+
+    // Issue specific OpenGl we might need
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // menu
+    pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(menu_width_));
+    pangolin::Var<bool> menu_follow_loc("menu.Follow", false, true);
+    pangolin::Var<bool> menu_reset_3d_view("menu.Reset 3D View", false, false);
+    pangolin::Var<bool> menu_reset_front_view("menu.Set to front View", false, false);
+    // display layout
+    CreateDisplayLayout();
+    exit_flag_.store(false);
+
+    while (!pangolin::ShouldQuit() && !exit_flag_) {
+        // Clear entire screen
+        glClearColor(255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if (menu_reset_3d_view) {
+            s_cam_main_.SetModelViewMatrix(pangolin::ModelViewLookAt(0, 0, 1000, 0, 0, 0, pangolin::AxisY));
+            menu_reset_3d_view = false;
+        }
+        if (menu_reset_front_view) {
+            s_cam_main_.SetModelViewMatrix(pangolin::ModelViewLookAt(-50, 0, 10, 50, 0, 10, pangolin::AxisZ));
+            menu_reset_front_view = false;
+        }
+        // Render
+        RenderClouds();
+        // menu control
+        // Swap frames and Process Events
+        pangolin::FinishFrame();
+    }
+    // unset the current context from the main thread
+    pangolin::GetBoundWindow()->RemoveCurrent();
 }
 
 void PangolinWindowImpl::AllocateBuffer() {
