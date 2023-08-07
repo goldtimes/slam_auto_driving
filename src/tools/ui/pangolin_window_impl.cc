@@ -53,7 +53,7 @@ void PangolinWindowImpl::DrawAll() {
     traj_lidarloc_ui_->Render();
     // 车
     car_.SetPose(current_pose_);  // 车在current pose上
-    car_.Render();
+    // car_.Render();
     // 文字
     RenderLabels();
 }

@@ -8,6 +8,7 @@
 
 ## IMU系统的运动学
 ## IMU进行DR——航迹推演
+[img](../../images/imu_integration.png)
 
 ## 卫星导航GNSS和RTK
 ## ESKF 误差状态卡尔曼滤波器学习

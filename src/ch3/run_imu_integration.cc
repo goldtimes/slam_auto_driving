@@ -7,7 +7,7 @@
 #include "common/io_utils.h"
 #include "tools/ui/pangolin_window.h"
 
-DEFINE_string(imu_txt_path, "./data/ch3/10.txt", "数据文件路径");
+DEFINE_string(imu_txt_path, "/home/slam_auto_driving/data/ch3/10.txt", "数据文件路径");
 DEFINE_bool(with_ui, true, "是否显示图像界面");
 
 int main(int argc, char** argv) {
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
         fout << std::endl;
     };
 
-    std::ofstream fout("./data/ch3/state.txt");
+    std::ofstream fout("/home/slam_auto_driving/data/ch3/state.txt");
     // 在io的go中读取到imu数据，然后调用传入的回调函数处理imu数据,积分和更新状态
     io.SetIMUProcessFunc([&imu_integration, &save_result, &fout, &ui](const lh::IMU& imu) {
           imu_integration.AddImu(imu);
