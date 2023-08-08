@@ -2,6 +2,7 @@
 #define SLAM_IN_AUTO_DRIVING_IO_UTILS_H
 #include <fstream>
 #include <functional>
+#include "gnss.h"
 #include "imu.h"
 #include "math_utils.h"
 
@@ -12,9 +13,15 @@ class TxtIO {
     TxtIO(const std::string& file_path) : fin(file_path) {}
 
     using IMUProcessFuncType = std::function<void(const IMU&)>;
+    using GNSSProcessFuncType = std::function<void(const GNSS&)>;
 
     TxtIO& SetIMUProcessFunc(IMUProcessFuncType imu_proc) {
         imu_proc_ = std::move(imu_proc);
+        return *this;
+    }
+
+    TxtIO& SetGNSSProcessFunc(GNSSProcessFuncType gnss_proc) {
+        gnss_proc_ = std::move(gnss_proc);
         return *this;
     }
     // 遍历文件内容
@@ -23,6 +30,7 @@ class TxtIO {
    private:
     std::ifstream fin;
     IMUProcessFuncType imu_proc_;
+    GNSSProcessFuncType gnss_proc_;
 };
 }  // namespace lh
 

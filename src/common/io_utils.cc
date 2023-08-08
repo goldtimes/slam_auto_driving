@@ -31,9 +31,10 @@ void TxtIO::Go() {
             ss >> time >> wl >> wr;
             // odom_proc_(Odom(time, wl, wr));
         } else if (data_type == "GNSS") {
-            double time, wl, wr;
-            ss >> time >> wl >> wr;
-            // gnss_proc_(GNSS(time, wl, wr));
+            double time, lat, lon, alt, heading;
+            bool heading_valid;
+            ss >> time >> lat >> lon >> alt >> heading >> heading_valid;
+            gnss_proc_(GNSS(time, 4, Vec3d(lat, lon, alt), heading, heading_valid));
         }
     }
     LOG(INFO) << "done.";

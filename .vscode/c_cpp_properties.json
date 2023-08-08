@@ -6,7 +6,6 @@
             "cStandard": "c11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "linux-gcc-x64",
-            "compileCommands": "/home/slam_auto_driving/build/compile_commands.json",
             "includePath": [
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/thirdparty/sophus",
