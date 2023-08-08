@@ -10,12 +10,16 @@
             "includePath": [
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/thirdparty/sophus",
+                "${workspaceFolder}/thirdparty/utm_convert",
                 "/usr/include",
                 "/usr/include/opencv4",
                 "/usr/include",
                 "/usr/include/x86_64-linux-gnu/c++/9",
                 "/usr/include/eigen3",
-                "${workspaceFolder}/src"
+                "${workspaceFolder}/src",
+                "/usr/include/x86_64-linux-gnu",
+                "/opt/ros/noetic/include",
+                "${workspaceFolder}/thirdparty"
             ]
         }
     ],
