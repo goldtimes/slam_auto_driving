@@ -29,7 +29,7 @@ void TxtIO::Go() {
         } else if (data_type == "ODOM") {
             double time, wl, wr;
             ss >> time >> wl >> wr;
-            // odom_proc_(Odom(time, wl, wr));
+            odom_proc_(Odom(time, wl, wr));
         } else if (data_type == "GNSS") {
             double time, lat, lon, alt, heading;
             bool heading_valid;

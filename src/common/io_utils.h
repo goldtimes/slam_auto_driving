@@ -5,6 +5,7 @@
 #include "gnss.h"
 #include "imu.h"
 #include "math_utils.h"
+#include "odom.h"
 
 namespace lh {
 // 读取数据文件
@@ -14,6 +15,7 @@ class TxtIO {
 
     using IMUProcessFuncType = std::function<void(const IMU&)>;
     using GNSSProcessFuncType = std::function<void(const GNSS&)>;
+    using OdomProcessFUncType = std::function<void(const Odom&)>;
 
     TxtIO& SetIMUProcessFunc(IMUProcessFuncType imu_proc) {
         imu_proc_ = std::move(imu_proc);
@@ -24,6 +26,11 @@ class TxtIO {
         gnss_proc_ = std::move(gnss_proc);
         return *this;
     }
+
+    TxtIO& SetOdomProcessFUncType(OdomProcessFUncType odom_proc) {
+        odom_proc_ = std::move(odom_proc);
+        return *this;
+    }
     // 遍历文件内容
     void Go();
 
@@ -31,6 +38,7 @@ class TxtIO {
     std::ifstream fin;
     IMUProcessFuncType imu_proc_;
     GNSSProcessFuncType gnss_proc_;
+    OdomProcessFUncType odom_proc_;
 };
 }  // namespace lh
 

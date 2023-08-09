@@ -18,7 +18,8 @@
                 "${workspaceFolder}/src",
                 "/usr/include/x86_64-linux-gnu",
                 "/opt/ros/noetic/include",
-                "${workspaceFolder}/thirdparty"
+                "${workspaceFolder}/thirdparty",
+                "${workspaceFolder}/src"
             ]
         }
     ],
