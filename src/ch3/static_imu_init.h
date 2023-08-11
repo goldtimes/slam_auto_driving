@@ -31,6 +31,7 @@ class StaticImuInit {
         double max_static_gyro_var = 0.5;            // 静态下陀螺仪测量方差
         double max_static_acce_var = 0.05;           // 静态下加速度计测量方差
         bool use_speed_for_static_checking_ = true;  // 使用odom数据来判断是否静止
+        double gravity_norm_ = 9.81;
     };
 
     StaticImuInit(Options options = Options()) : options_(options) {}
