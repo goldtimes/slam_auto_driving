@@ -26,10 +26,10 @@ int main(int argc, char** argv) {
     lh::ui::PangolinWindow ui;
     if (ui.Init() == false)
         return -1;
-    double angular_velocity_rad = FLAGS_angular_velocity * lh::math::DEG2RAD;  // 转到弧度制
-    SE3 pose;                                                                  // T_B_W 表示的姿态
-    Vec3d omega(0, 0, angular_velocity_rad);                                   // 定义角速度
-    Vec3d v_body(FLAGS_linear_velocity, 0, 0);                                 // 定义线速度
+    double angular_velocity_rad = FLAGS_angular_velocity * lh::math::kDEG2RAD;  // 转到弧度制
+    SE3 pose;                                                                   // T_B_W 表示的姿态
+    Vec3d omega(0, 0, angular_velocity_rad);                                    // 定义角速度
+    Vec3d v_body(FLAGS_linear_velocity, 0, 0);                                  // 定义线速度
 
     const double dt = 0.05;
     while (ui.ShouldQuit() == false) {

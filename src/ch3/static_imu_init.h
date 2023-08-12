@@ -24,7 +24,7 @@ class StaticImuInit {
    public:
     struct Options {
         /* data */
-        Options() = default;
+        Options() {}
         double init_time_seconds_ = 10.0;            // 静止的时间
         int init_imu_queue_max_size_ = 2000;         // 初始化时imu队列的最大长度
         double static_odom_pulse_ = 5;               // 静止时轮速记输出噪声
@@ -62,7 +62,7 @@ class StaticImuInit {
     bool is_static_ = false;
     std::deque<IMU> init_imu_deque_;  // 初始化用的imu数据
     double current_time_ = 0.0;
-    double init_start_time = 0.0;  // 静止的初始时间
+    double init_start_time_ = 0.0;  // 静止的初始时间
 };
 
 }  // namespace lh

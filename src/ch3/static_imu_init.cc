@@ -9,19 +9,20 @@ bool StaticImuInit::AddIMU(const IMU& imu) {
         return true;
     }
     if (options_.use_speed_for_static_checking_ && !is_static_) {
-        LOG(WARNING) << "等待车辆静止";
+        // LOG(WARNING) << "等待车辆静止";
         init_imu_deque_.clear();
         return false;
     }
     // 开始记录静止时间
     if (init_imu_deque_.empty()) {
-        init_start_time = imu.timestamp_;
+        init_start_time_ = imu.timestamp_;
     }
 
     init_imu_deque_.push_back(imu);
-    double init_time = imu.timestamp_ - init_start_time;
+    double init_time = imu.timestamp_ - init_start_time_;
     if (init_time > options_.init_time_seconds_) {
         // 静止的时间>10s
+        LOG(INFO) << "try_init:";
         TryInit();
     }
     // 维护队列的长度
@@ -34,10 +35,10 @@ bool StaticImuInit::AddIMU(const IMU& imu) {
 }
 
 bool StaticImuInit::AddOdom(const Odom& odom) {
+    // 如果已经初始化成功
     if (init_success_) {
         return true;
     }
-
     if (odom.left_pulse_ < options_.static_odom_pulse_ && odom.right_pulse_ < options_.static_odom_pulse_) {
         is_static_ = true;
     } else {
@@ -50,10 +51,9 @@ bool StaticImuInit::AddOdom(const Odom& odom) {
 bool StaticImuInit::TryInit() {
     if (init_imu_deque_.size() < 10)
         return false;
-
     // 计算均值和方差 累加的统计方式
     Vec3d mean_gyro, mean_acce;
-    math::ComputeMeanAndCovDiag(init_imu_deque_, mean_gyro, cov_gyro_, [](const IMU& imu) { return imu.gyro_; });
+    math::ComputeMeanAndCovDiag(init_imu_deque_, mean_gyro, cov_gyro_, [this](const IMU& imu) { return imu.gyro_; });
     math::ComputeMeanAndCovDiag(init_imu_deque_, mean_acce, cov_acce_, [this](const IMU& imu) { return imu.acce_; });
 
     LOG(INFO) << "mean acce: " << mean_acce.transpose();
@@ -78,7 +78,7 @@ bool StaticImuInit::TryInit() {
     init_bg_ = mean_gyro;
     init_ba_ = mean_acce;
 
-    LOG(INFO) << "IMU 初始化成功，初始化时间= " << current_time_ - init_start_time << ", bg = " << init_bg_.transpose()
+    LOG(INFO) << "IMU 初始化成功，初始化时间= " << current_time_ - init_start_time_ << ", bg = " << init_bg_.transpose()
               << ", ba = " << init_ba_.transpose() << ", gyro sq = " << cov_gyro_.transpose()
               << ", acce sq = " << cov_acce_.transpose() << ", grav = " << gravity_.transpose()
               << ", norm: " << gravity_.norm();

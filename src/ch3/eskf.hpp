@@ -71,11 +71,11 @@ class ESKF {
      */
     void SetInitialConditions(Options options, const Vec3T& init_bg, const Vec3T& init_ba,
                               const Vec3T gravity = Vec3T{0, 0, -9.8}) {
-        BuildNosie(options);
+        BuildNoise(options);
         options_ = options;
-        bg_ = bg;
-        ba_ = ba;
-        cov_ = Mat18T::Identiyu() * 1e-4;
+        bg_ = init_bg;
+        ba_ = init_ba;
+        cov_ = Mat18T::Identity() * 1e-4;
     }
     // imu 递推
     bool Predict(const IMU& imu);
@@ -172,7 +172,7 @@ class ESKF {
     OdomNoiseT odom_noise_ = OdomNoiseT::Zero();
     GnssNoiseT gnss_noise_ = GnssNoiseT::Zero();
     // 第一帧的gnss数据
-    bool first_gnss_ t = true;
+    bool first_gnss_ = true;
     Options options_;
 };
 
@@ -223,7 +223,7 @@ bool ESKF<S>::ObserveWheelSpeed(const Odom& odom) {
     // odom修正雅可比矩阵
     Eigen::Matrix<S, 3, 18> H = Eigen::Matrix<S, 3, 18>::Zero();
     // 为什么设置为单位矩阵
-    H.template block<3, 3>(0, 3) = Mat3T::Idetity();
+    H.template block<3, 3>(0, 3) = Mat3T::Identity();
 
     // 卡尔曼增益
     Eigen::Matrix<S, 18, 3> K = cov_ * H.transpose() * (H * cov_ * H.transpose() + odom_noise_).inverse();
