@@ -13,6 +13,9 @@ using PointType = pcl::PointXYZI;
 using PointCloudType = pcl::PointCloud<PointType>;
 using CloudPtr = PointCloudType::Ptr;
 
+inline Vec3f ToVec3f(const PointType& pt) { return pt.getVector3fMap(); }
+inline Vec3d ToVec3d(const PointType& pt) { return pt.getVector3fMap().cast<double>(); }
+
 }  // namespace lh
 
 #endif

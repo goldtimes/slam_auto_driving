@@ -4,3 +4,10 @@ target_link_libraries(point_cloud_load_vis
         ${GLOG_LIBRARIES}
         gflags
         )
+
+add_library(${PROJECT_NAME}.ch5
+        bfnn.cc
+)
+target_link_libraries(${PROJECT_NAME}.ch5
+        tbb
+)
