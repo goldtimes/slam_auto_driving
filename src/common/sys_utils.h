@@ -18,12 +18,10 @@ void evaluate_and_call(FuncT&& func, const std::string& func_name = "", int time
         auto start_time = std::chrono::high_resolution_clock::now();
         func();
         auto end_time = std::chrono::high_resolution_clock::now();
-        total_time +=
-            std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() * 1000;
+        total_time += std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count() * 1000;
     }
 
-    LOG(INFO) << "func: " << func_name << "平均调用时间/次数: " << total_time / times << "/"
-              << times << "毫秒.";
+    LOG(INFO) << "func: " << func_name << "平均调用时间/次数: " << total_time / times << "/" << times << "毫秒.";
 }
 
 #endif
