@@ -16,6 +16,8 @@ namespace lh::math {
 constexpr double kDEG2RAD = M_PI / 180.0;  // deg->rad
 constexpr double kRAD2DEG = 180.0 / M_PI;  // rad -> deg
 constexpr double G_m_s2 = 9.81;            // 重力大小
+// 非法定义
+constexpr size_t kINVALID_ID = std::numeric_limits<size_t>::max();
 
 /**
  * @param C 抽象的容器类型
