@@ -7,6 +7,7 @@ target_link_libraries(point_cloud_load_vis
 
 add_library(${PROJECT_NAME}.ch5
         bfnn.cc
+        kdtree.cc
 )
 target_link_libraries(${PROJECT_NAME}.ch5
         tbb

@@ -7,6 +7,7 @@
 #include "common/point_types.h"
 #include "common/sys_utils.h"
 #include "gridnn.hpp"
+#include "kdtree.h"
 
 DEFINE_string(first_scan_path, "/home/slam_auto_driving/data/ch5/first.pcd", "第一个点云路径");
 DEFINE_string(second_scan_path, "/home/slam_auto_driving/data/ch5/second.pcd", "第二个点云路径");
@@ -149,6 +150,36 @@ TEST(CH5_TEST, GRID_NN) {
     EvaluateMatches(truth_matches, matches);
 
     SUCCEED();
+}
+
+TEST(CH5_TEST, KDTREE_BASICS) {
+    lh::CloudPtr cloud(new lh::PointCloudType);
+
+    lh::PointType p1, p2, p3, p4;
+    p1.x = 0;
+    p1.y = 0;
+    p1.z = 0;
+
+    p2.x = 1;
+    p2.y = 0;
+    p2.z = 0;
+
+    p3.x = 0;
+    p3.y = 1;
+    p3.z = 0;
+
+    p4.x = 1;
+    p4.y = 1;
+    p4.z = 0;
+
+    cloud->points.push_back(p1);
+    cloud->points.push_back(p2);
+    cloud->points.push_back(p3);
+    cloud->points.push_back(p4);
+
+    lh::KdTree kdtree;
+    kdtree.BuildTree(cloud);
+    kdtree.PrintAll();
 }
 
 int main(int argc, char** argv) {

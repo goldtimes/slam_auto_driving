@@ -12,6 +12,7 @@ namespace lh {
 using PointType = pcl::PointXYZI;
 using PointCloudType = pcl::PointCloud<PointType>;
 using CloudPtr = PointCloudType::Ptr;
+using IndexVec = std::vector<int>;
 
 // 点云到Eigen的转换函数
 inline Vec3f ToVec3f(const PointType& pt) { return pt.getVector3fMap(); }
