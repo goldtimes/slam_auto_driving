@@ -63,6 +63,51 @@ void ComputeMeanAndCovDiag(const C& data, D& mean, D& cov_diag, Getter&& getter)
                                }) / (len - 1);
     // clang-format on
 }
+
+template <typename S>
+bool FitPlane(std::vector<Eigen::Matrix<S, 3, 1>>& data, Eigen::Matrix<S, 4, 1>& plane_coeffs, double eps = 1e-2) {
+    if (data.size() < 3)
+        return false;
+    // 每个点都有4个未知参数
+    Eigen::MatrixXd A(data.size(), 4);
+    for (int i = 0; i < data.size(); i++) {
+        A.row(i).head<3>() = data[i].transpose();
+        A.row(i)[3] = 1.0;
+    }
+    Eigen::JacobiSVD svd(A, Eigen::ComputeThinV);
+    plane_coeffs = svd.matrixV().col(3);
+    // check error
+    for (int i = 0; i < data.size(); i++) {
+        double err = plane_coeffs.template head<3>().dot(data[i]) + plane_coeffs[3];
+        if (err * err > eps) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <typename S>
+bool FitLine(std::vector<Eigen::Matrix<S, 3, 1>>& data, Eigen::Matrix<S, 3, 1>& origin, Eigen::Matrix<S, 3, 1>& dir, double eps = 0.2) {
+    if (data.size() < 2) {
+        return false;
+    }
+    origin = std::accumulate(data.begin(), data.end(), Eigen::Matrix<S, 3, 1>::Zero().eval()) / data.size();
+
+    Eigen::MatrixXd Y(data.size(), 3);
+    for (int i = 0; i < data.size(); ++i) {
+        Y.row(i) = (data[i] - origin).transpose();
+    }
+    Eigen::JacobiSVD svd(Y, Eigen::ComputeFullV);
+    dir = svd.matrixV().col(0);
+
+    for (const auto& d : data) {
+        if (dir.template cross(d - origin).template squaredNorm() > eps) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace lh::math
 
 #endif

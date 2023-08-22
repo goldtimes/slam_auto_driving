@@ -60,7 +60,7 @@ class KdTree {
 
     void Reset();
 
-    static inline float Dis2(const Vec3f& p1, const Vec3f& p2) {}
+    static inline float Dis2(const Vec3f& p1, const Vec3f& p2) { return 0; }
 
    private:
     int k_ = 5;                                   // knn最近邻数量
