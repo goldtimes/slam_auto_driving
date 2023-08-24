@@ -20,8 +20,7 @@ enum class GpsStatusType {
 // UTM坐标
 struct UTMCoordinate {
     UTMCoordinate() = default;
-    explicit UTMCoordinate(int zone, const Vec2d& xy = Vec2d::Zero(), bool north = true)
-        : zone_(zone), xy_(xy), north_(north) {}
+    explicit UTMCoordinate(int zone, const Vec2d& xy = Vec2d::Zero(), bool north = true) : zone_(zone), xy_(xy), north_(north) {}
     int zone_ = 0;  // utm区域
     Vec2d xy_ = Vec2d::Zero();
     double z_ = 0;       // 高度
@@ -34,6 +33,15 @@ struct GNSS {
     GNSS(double unix_time, int status, const Vec3d& lat_lon_alt, double heading, bool heading_valid)
         : unix_time_(unix_time), lat_lon_alt_(lat_lon_alt), heading_(heading), heading_valid_(heading_valid) {
         status_ = GpsStatusType(status);
+    }
+    GNSS(sensor_msgs::NavSatFix::Ptr msg) {
+        unix_time_ = msg->header.stamp.toSec();
+        if (int(msg->status.status) >= int(sensor_msgs::NavSatStatus::STATUS_FIX)) {
+            status_ = GpsStatusType::GNSS_FIXED_SOLUTION;
+        } else {
+            status_ = GpsStatusType::GNSS_OTHER;
+        }
+        lat_lon_alt_ << msg->latitude, msg->longitude, msg->altitude;
     }
 
     double unix_time_ = 0;

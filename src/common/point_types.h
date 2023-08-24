@@ -33,6 +33,24 @@ inline Eigen::Matrix<float, 3, 1> ToEigen(const PointType& pt) {
     return Vec3f(pt.x, pt.y, pt.z);
 }
 
+// 带ring,range等其他信息的全量信息点云
+struct FullPointType {
+    PCL_ADD_POINT4D;
+    float range = 0;
+    float radius = 0;
+    uint8_t intensity = 0;
+    uint8_t ring = 0;
+    uint8_t angle = 0;
+    double time = 0;
+    float height = 0;
+
+    inline FullPointType() {}
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+using FullPointCloudType = pcl::PointCloud<FullPointType>;
+using FullCloudPtr = FullPointCloudType::Ptr;
+
 }  // namespace lh
 
 #endif
