@@ -217,7 +217,7 @@ class RosbagIO {
     DatasetType dataset_type_;
 
     // packets
-    sad::tools::VelodyneConvertor vlp_parser_;
+    lh::tools::VelodyneConvertor vlp_parser_;
 };
 }  // namespace lh
 

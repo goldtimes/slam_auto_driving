@@ -1,7 +1,7 @@
 #include "tools/pointcloud_convert/packets_parser.h"
 #include <glog/logging.h>
 
-namespace sad::tools {
+namespace lh::tools {
 
 float transform_x_of_x, transform_y_of_x, transform_z_of_x;
 float transform_x_of_y, transform_y_of_y, transform_z_of_y;
@@ -55,16 +55,12 @@ int PacketsParser::Setup(const VelodyneConfig &conf) {
     int zr = config_.yaw >= 0 ? config_.yaw * 100 : (config_.yaw + 360) * 100;
 
     transform_x_of_x = cos_rot_table_[zr] * cos_rot_table_[yr];
-    transform_y_of_x =
-        sin_rot_table_[zr] * cos_rot_table_[xr] + cos_rot_table_[zr] * sin_rot_table_[yr] * sin_rot_table_[xr];
-    transform_z_of_x =
-        sin_rot_table_[zr] * sin_rot_table_[xr] - cos_rot_table_[zr] * sin_rot_table_[yr] * cos_rot_table_[xr];
+    transform_y_of_x = sin_rot_table_[zr] * cos_rot_table_[xr] + cos_rot_table_[zr] * sin_rot_table_[yr] * sin_rot_table_[xr];
+    transform_z_of_x = sin_rot_table_[zr] * sin_rot_table_[xr] - cos_rot_table_[zr] * sin_rot_table_[yr] * cos_rot_table_[xr];
 
     transform_x_of_y = -sin_rot_table_[zr] * cos_rot_table_[yr];
-    transform_y_of_y =
-        cos_rot_table_[zr] * cos_rot_table_[xr] - sin_rot_table_[zr] * sin_rot_table_[yr] * sin_rot_table_[xr];
-    transform_z_of_y =
-        cos_rot_table_[zr] * sin_rot_table_[xr] + sin_rot_table_[zr] * sin_rot_table_[yr] * cos_rot_table_[xr];
+    transform_y_of_y = cos_rot_table_[zr] * cos_rot_table_[xr] - sin_rot_table_[zr] * sin_rot_table_[yr] * sin_rot_table_[xr];
+    transform_z_of_y = cos_rot_table_[zr] * sin_rot_table_[xr] + sin_rot_table_[zr] * sin_rot_table_[yr] * cos_rot_table_[xr];
 
     transform_x_of_z = sin_rot_table_[yr];
     transform_y_of_z = -cos_rot_table_[yr] * sin_rot_table_[xr];
@@ -103,8 +99,7 @@ void PacketsParser::PaddingPointCloud(const PacketsMsgPtr &scan_msg, FullCloudPt
     }
 }
 
-void PacketsParser::Unpack(const velodyne_msgs::VelodynePacket &pkt, const ros::Time &msg_stamp,
-                           std::vector<FullCloudPtr> &rings_pointcloud) {
+void PacketsParser::Unpack(const velodyne_msgs::VelodynePacket &pkt, const ros::Time &msg_stamp, std::vector<FullCloudPtr> &rings_pointcloud) {
     float azimuth_diff = 0.0;
     float last_azimuth_diff = 0.0;
     float azimuth_corrected_f = 0.0;
@@ -177,8 +172,7 @@ void PacketsParser::ArrangePointcloud(const std::vector<FullCloudPtr> &rings_poi
         }
 
         if (config_.is_organized) {
-            out_pc_ptr->insert(out_pc_ptr->end(), rings_pointcloud[i]->points.begin(),
-                               rings_pointcloud[i]->points.end());
+            out_pc_ptr->insert(out_pc_ptr->end(), rings_pointcloud[i]->points.begin(), rings_pointcloud[i]->points.end());
             width = std::max(static_cast<int>(rings_pointcloud[i]->points.size()), width);
             height += 1;
         } else {
@@ -212,8 +206,7 @@ inline void PacketsParser::FilledFree(FullPointType &point) {
 }
 
 inline bool PacketsParser::isPointValid(const FullPointType &point) {
-    if (point.x == HIT_NAN || point.x == HIT_FREE || point.y == HIT_NAN || point.y == HIT_FREE || point.z == HIT_NAN ||
-        point.z == HIT_FREE)
+    if (point.x == HIT_NAN || point.x == HIT_FREE || point.y == HIT_NAN || point.y == HIT_FREE || point.z == HIT_NAN || point.z == HIT_FREE)
         return false;
 
     return true;
@@ -228,16 +221,15 @@ inline bool PacketsParser::isScanValid(int rotation, float range) {
 }
 
 inline bool PacketsParser::isScanValid(const FullPointType &point) {
-    if (point.x < config_.car_front && point.x > config_.car_back && point.y < config_.car_left &&
-        point.y > config_.car_right && point.z < config_.car_top && point.z > config_.car_bottom) {
+    if (point.x < config_.car_front && point.x > config_.car_back && point.y < config_.car_left && point.y > config_.car_right &&
+        point.z < config_.car_top && point.z > config_.car_bottom) {
         return false;
     }
 
     return true;
 }
 
-void PacketsParser::ComputeCoords(const float distance, const int vert_line_index, const uint16_t &rotation,
-                                  FullPointType &point) {
+void PacketsParser::ComputeCoords(const float distance, const int vert_line_index, const uint16_t &rotation, FullPointType &point) {
     double x = 0.0;
     double y = 0.0;
     double z = 0.0;
@@ -269,4 +261,4 @@ void PacketsParser::ComputeCoords(const float distance, const int vert_line_inde
     }
 }
 
-}  // namespace sad::tools
+}  // namespace lh::tools

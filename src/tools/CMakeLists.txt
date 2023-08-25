@@ -4,6 +4,9 @@ add_library(${PROJECT_NAME}.tools
             ui/pangolin_window_impl.cc
             ui/ui_trajectory.cc
             ui/ui_car.cc
+            # 点云处理
+            pointcloud_convert/velodyne_convertor.cc
+            pointcloud_convert/packets_parser.cc
             )
 target_link_libraries(${PROJECT_NAME}.tools
                     ${third_party_libs}

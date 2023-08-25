@@ -5,7 +5,7 @@
 #ifndef FUSION_VELODYNE_CONFIG_H
 #define FUSION_VELODYNE_CONFIG_H
 
-namespace sad::tools {
+namespace lh::tools {
 
 /// velodyne的配置参数
 struct VelodyneConfig {
@@ -32,6 +32,6 @@ struct VelodyneConfig {
     double car_top = 2.0;
     double car_bottom = -20.0;
 };
-}  // namespace sad::tools
+}  // namespace lh::tools
 
 #endif  // FUSION_VELODYNE_CONFIG_H

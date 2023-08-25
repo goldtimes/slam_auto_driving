@@ -5,7 +5,7 @@
 #include "common/io_utils.h"
 #include "lidar_2d_utils.h"
 
-DEFINE_string(bag_path, "./dataset/sad/2dmapping/test_2d_lidar.bag", "数据包路径");
+DEFINE_string(bag_path, "/sad/rosbags/2dmapping/floor1.bag", "数据包路径");
 
 /**
  * 测试rosbag中读取2d scan数据
@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         .AddScan2DHandler("/pavo_scan_bottom",
                           [](Scan2d::Ptr scan) {
                               cv::Mat img;
-                              lh::Visualize2DScan(scan, SE2(), img, Vec3b(255, 0, 0));
+                              lh::Visualize2DScan(scan, SE2(), img, Vec3d(255, 0, 0));
                               cv::imshow("scan", img);
                               cv::waitKey(20);
                               return true;

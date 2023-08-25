@@ -47,10 +47,23 @@ struct FullPointType {
     inline FullPointType() {}
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-
+// 全量点云的定义
 using FullPointCloudType = pcl::PointCloud<FullPointType>;
 using FullCloudPtr = FullPointCloudType::Ptr;
 
+inline Vec3f ToVec3f(const FullPointType& pt) { return pt.getVector3fMap(); }
+inline Vec3d ToVec3d(const FullPointType& pt) { return pt.getVector3fMap().cast<double>(); }
+
+// ui中的点云颜色
+using UiPointType = pcl::PointXYZRGB;
+using UiPointCloudType = pcl::PointCloud<UiPointType>;
+using UiCloudPtr = UiPointCloudType::Ptr;
 }  // namespace lh
 
+// clang-format off
+POINT_CLOUD_REGISTER_POINT_STRUCT(lh::FullPointType,
+                                  (float, x, x)(float, y, y)(float, z, z)(float, range, range)(float, radius, radius)(
+                                      std::uint8_t, intensity, intensity)(std::uint16_t, angle, angle)(
+                                      std::uint8_t, ring, ring)(double, time, time)(float, height, height))
+// clang-format on
 #endif

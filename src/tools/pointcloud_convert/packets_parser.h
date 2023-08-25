@@ -8,7 +8,7 @@
 #include "common/point_types.h"
 #include "tools/pointcloud_convert/velodyne_config.h"
 
-namespace sad::tools {
+namespace lh::tools {
 
 /// packets协议解析
 class PacketsParser {
@@ -30,9 +30,8 @@ class PacketsParser {
     constexpr static const float kVLP16DsrToffset = 2.304f;
     constexpr static const float kVLP16FiringToffset = 55.296f;
     constexpr static const double kVLP16ScanVertAngle[kVLP16ScanPerFiring] = {
-        -0.2617993877991494,  0.017453292519943295, -0.22689280275926285,  0.05235987755982989,
-        -0.19198621771937624, 0.08726646259971647,  -0.15707963267948966,  0.12217304763960307,
-        -0.12217304763960307, 0.15707963267948966,  -0.08726646259971647,  0.19198621771937624,
+        -0.2617993877991494,  0.017453292519943295, -0.22689280275926285,  0.05235987755982989, -0.19198621771937624, 0.08726646259971647,
+        -0.15707963267948966, 0.12217304763960307,  -0.12217304763960307,  0.15707963267948966, -0.08726646259971647, 0.19198621771937624,
         -0.05235987755982989, 0.22689280275926285,  -0.017453292519943295, 0.2617993877991494};
 
     struct RawBlock {
@@ -70,8 +69,7 @@ class PacketsParser {
 
    private:
     /// 输出的点云rings_pointcloud中，每个点的curvature字段保存该点与msg_stamp的时间差
-    void Unpack(const velodyne_msgs::VelodynePacket &pkt, const ros::Time &msg_stamp,
-                std::vector<FullCloudPtr> &rings_pointcloud);
+    void Unpack(const velodyne_msgs::VelodynePacket &pkt, const ros::Time &msg_stamp, std::vector<FullCloudPtr> &rings_pointcloud);
 
     inline bool isScanValid(int rotation, float range);
 
@@ -103,4 +101,4 @@ class PacketsParser {
     float cos_rot_table_[kRotationMaxUnits]{};
 };
 
-}  // namespace sad::tools
+}  // namespace lh::tools

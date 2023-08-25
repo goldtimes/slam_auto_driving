@@ -6,7 +6,7 @@
 
 namespace lh {
 void VoxelGrid(CloudPtr cloud, float voxel_size) {
-    pcl::VoxelGrid<lh::PointType> voxel;
+    pcl::VoxelGrid<PointType> voxel;
     voxel.setLeafSize(voxel_size, voxel_size, voxel_size);
     voxel.setInputCloud(cloud);
 
