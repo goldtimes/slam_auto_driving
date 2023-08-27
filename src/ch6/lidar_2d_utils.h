@@ -6,6 +6,6 @@
 #include <opencv2/core/core.hpp>
 
 namespace lh {
-void Visualize2DScan(Scan2d::Ptr scan, const SE2& pose, cv::Mat& image, const Vec3d& color, int image_size = 800, float resolution = 20.0,
+void Visualize2DScan(Scan2d::Ptr scan, const SE2& pose, cv::Mat& image, const Vec3b& color, int image_size = 800, float resolution = 20.0,
                      const SE2& pose_submap = SE2());
 }

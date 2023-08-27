@@ -2,7 +2,7 @@
 #include <opencv2/imgproc.hpp>
 
 namespace lh {
-void Visualize2DScan(Scan2d::Ptr scan, const SE2& pose, cv::Mat& image, const Vec3d& color, int image_size, float resolution,
+void Visualize2DScan(Scan2d::Ptr scan, const SE2& pose, cv::Mat& image, const Vec3b& color, int image_size, float resolution,
                      const SE2& pose_submap) {
     if (image.data == nullptr) {
         image = cv::Mat(image_size, image_size, CV_8UC3, cv::Vec3b(255, 255, 255));

@@ -1,5 +1,5 @@
 add_library(${PROJECT_NAME}.ch6
-        # icp_2d.cc
+        icp_2d.cc
         lidar_2d_utils.cc
         # likelihood_field.cc
         # occupancy_map.cc
@@ -25,4 +25,14 @@ target_link_libraries(test_2dlidar_io
         glog gflags
         ${PCL_LIBRARIES}
         ${third_party_libs}
+        )
+
+add_executable(test_2d_icp_s2s
+        test_2d_icp_s2s.cc)
+        target_link_libraries(test_2d_icp_s2s
+        ${PROJECT_NAME}.ch6
+        ${OpenCV_LIBS}
+        ${catkin_LIBRARIES}
+        glog gflags
+        ${PCL_LIBRARIES}
         )

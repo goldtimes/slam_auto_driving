@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         .AddScan2DHandler("/pavo_scan_bottom",
                           [](Scan2d::Ptr scan) {
                               cv::Mat img;
-                              lh::Visualize2DScan(scan, SE2(), img, Vec3d(255, 0, 0));
+                              lh::Visualize2DScan(scan, SE2(), img, Vec3b(255, 0, 0));
                               cv::imshow("scan", img);
                               cv::waitKey(20);
                               return true;
