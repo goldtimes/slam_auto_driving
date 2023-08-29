@@ -2,6 +2,7 @@
     "editor.formatOnSave": true,
     "clang-format.executable": "/usr/bin/clang-format-7",
     "files.associations": {
+        "*.hpp": "cpp",
         "thread": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
@@ -76,6 +77,7 @@
         "valarray": "cpp",
         "variant": "cpp",
         "bit": "cpp",
-        "execution": "cpp"
+        "execution": "cpp",
+        "*.ipp": "cpp"
     }
 }
