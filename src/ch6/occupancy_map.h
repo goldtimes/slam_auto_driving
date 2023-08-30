@@ -26,7 +26,7 @@ class OccupancyMap {
     /**
      * @brief 获取原始的占据栅格地图
      */
-    cv::Mat GetOccupancyGrid() const { return occpuancy_grid_; }
+    cv::Mat GetOccupancyGrid() const { return occupancy_grid_; }
 
     /**
      * @brief 黑白灰的占据栅格，可视化
@@ -71,8 +71,8 @@ class OccupancyMap {
     void BresenhamFilling(const Vec2i& pi, const Vec2i& p2);
 
    private:
-    cv::Mat occpuancy_grid_;
-    SE2 pose_;  // T scan to world
+    cv::Mat occupancy_grid_;
+    SE2 pose_;  // T_ws
     Vec2d center_image_ = Vec2d(image_size_ / 2, image_size_ / 2);
 
     bool has_outside_pts_ = false;

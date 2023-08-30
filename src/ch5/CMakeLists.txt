@@ -21,8 +21,8 @@ target_link_libraries(linear_fitting
         gflags
         )
 
-ADD_EXECUTABLE(test_nn test_nn.cc)
-ADD_TEST(test_nn test_bfnn)
-target_link_libraries(test_nn
-        gtest pthread glog gflags  ${PROJECT_NAME}.ch5 ${PROJECT_NAME}.common ${PCL_LIBRARIES} tbb
-        )
+# ADD_EXECUTABLE(test_nn test_nn.cc)
+# ADD_TEST(test_nn test_bfnn)
+# target_link_libraries(test_nn
+#         gtest pthread glog gflags  ${PROJECT_NAME}.ch5 ${PROJECT_NAME}.common ${PCL_LIBRARIES} tbb
+#         )

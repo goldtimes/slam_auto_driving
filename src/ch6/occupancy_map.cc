@@ -8,7 +8,7 @@
 namespace lh {
 OccupancyMap::OccupancyMap() {
     BuildModel();
-    occpuancy_grid_ = cv::Mat(image_size_, image_size_, CV_8U, 127);
+    occupancy_grid_ = cv::Mat(image_size_, image_size_, CV_8U, 127);
 }
 
 void OccupancyMap::BuildModel() {
@@ -63,11 +63,12 @@ double OccupancyMap::FindRangeInAngle(double angle, Scan2d::Ptr scan) {
     }
     return range;
 }
-void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method = GridMethod::BRESENHAM) {
+void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method) {
     auto& scan = frame->scan_;
     // 不能直接使用frame->pose_, 因为frame可能来自上一个地图
     // 此时的frame->pose_未更新，依旧是frame上一个地图中的pose
-    SE2 pose_in_submap = pose_.inverse() * frame->pose_;  // 我这里理解的是增量？
+    //  Tsc = Tsw * Twc
+    SE2 pose_in_submap = pose_.inverse() * frame->pose_;
     float theta = pose_in_submap.so2().log();
 
     has_outside_pts_ = false;
@@ -81,7 +82,7 @@ void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method
         double real_angle = scan->angle_min + i * scan->angle_increment;
         double x = scan->ranges[i] * std::cos(real_angle);
         double y = scan->ranges[i] * std::sin(real_angle);
-        // 先获得世界坐标系下的点 p_w = T_m_w * p_m, 在将p_w转到图像上的像素点
+        // 先获得世界坐标系下的点 p_w = T_wc * p_c, 在将p_w转到图像上的像素点
         endpoints.emplace(world2Image(frame->pose_ * Vec2d(x, y)));
     }
 
@@ -114,45 +115,48 @@ void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method
         });
     } else {
         Vec2i start = world2Image(frame->pose_.translation());
+        // start 代表机器人的原点， pt为扫描的末端点
         std::for_each(std::execution::par_unseq, endpoints.begin(), endpoints.end(), [this, &start](const auto& pt) { BresenhamFilling(start, pt); });
     }
+    /// 末端点涂黑
+    std::for_each(endpoints.begin(), endpoints.end(), [this](const auto& pt) { SetPoint(pt, true); });
 }
 
 void OccupancyMap::SetPoint(const Vec2i& pt, bool occupy) {
     // 检查点是否超过的图像大小
     int x = pt[0], y = pt[1];
 
-    if (x < 0 || y << 0 || x >= occpuancy_grid_.cols || y >= occpuancy_grid_.rows) {
+    if (x < 0 || y < 0 || x >= occupancy_grid_.cols || y >= occupancy_grid_.rows) {
         if (occupy) {
             has_outside_pts_ = true;
         }
         return;
     }
     // 下标合法
-    uchar value = occpuancy_grid_.at<uchar>(y, x);
+    uchar value = occupancy_grid_.at<uchar>(y, x);
     // 将颜色限制在117-137  0-255是从黑到白
     if (occupy) {
         if (value > 117) {
-            occpuancy_grid_.ptr<uchar>(y)[x] -= 1;
+            occupancy_grid_.ptr<uchar>(y)[x] -= 1;
         }
     } else {
         if (value < 137) {
-            occpuancy_grid_.ptr<uchar>(y)[x] += 1;
+            occupancy_grid_.ptr<uchar>(y)[x] += 1;
         }
     }
 }
 
 cv::Mat OccupancyMap::GetOccupancyGridBlackWhite() const {
     cv::Mat image(image_size_, image_size_, CV_8UC3);
-    for (int x = 0; x < occpuancy_grid_.cols; ++x) {
-        for (int y = 0; y < occpuancy_grid_.rows; ++y) {
-            if (occpuancy_grid_.at<uchar>(y, x) == 127) {
+    for (int x = 0; x < occupancy_grid_.cols; ++x) {
+        for (int y = 0; y < occupancy_grid_.rows; ++y) {
+            if (occupancy_grid_.at<uchar>(y, x) == 127) {
                 // 灰色
                 image.at<cv::Vec3b>(y, x) = cv::Vec3b(127, 127, 127);
-            } else if (occpuancy_grid_.at<uchar>(y, x) < 127) {
+            } else if (occupancy_grid_.at<uchar>(y, x) < 127) {
                 // 黑色
                 image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
-            } else if (occpuancy_grid_.at<uchar>(y, x) > 127) {
+            } else if (occupancy_grid_.at<uchar>(y, x) > 127) {
                 // 白色
                 image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
             }
@@ -162,21 +166,25 @@ cv::Mat OccupancyMap::GetOccupancyGridBlackWhite() const {
 }
 
 void OccupancyMap::BresenhamFilling(const Vec2i& p1, const Vec2i& p2) {
+    // [dx, dy]为坐标增长的方向
     int dx = p2.x() - p1.x();
     int dy = p2.y() - p1.y();
+    // 方向 [ux,uy]
     int ux = dx > 0 ? 1 : -1;
     int uy = dy > 0 ? 1 : -1;
     dx = abs(dx);
     dy = abs(dy);
-
+    // 初始的x,y, 直线的线率为dy/dx,所以x增加1 那么y值增加dy/dx
     int x = p1.x();
     int y = p1.y();
-
+    // 以x为增量
     if (dx > dy) {
-        // 以x为增量
+        // 将初始的误差定义为-dx
         int e = -dx;
         for (int i = 0; i < dx; ++i) {
+            // x + 1
             x += ux;
+            // 误差累积 dx * 2dy/dx = 2dy
             e += 2 * dy;
             if (e >= 0) {
                 y += uy;
