@@ -34,12 +34,11 @@ int main(int argc, char** argv) {
                               icp.setSource(current_scan);
 
                               SE2 pose;
-                              if (fLS::FLAGS_method == "point2point2") {
+                              if (fLS::FLAGS_method == "point2point") {
                                   icp.AlignGaussNewton(pose);
                               } else if (fLS::FLAGS_method == "point2plane") {
                                   icp.AlignGaussNewtonPoint2Plane(pose);
                               }
-
                               cv::Mat image;
                               lh::Visualize2DScan(last_scan, SE2(), image, Vec3b(255, 0, 0));
                               lh::Visualize2DScan(current_scan, pose, image, Vec3b(0, 0, 255));

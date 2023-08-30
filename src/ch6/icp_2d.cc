@@ -32,7 +32,7 @@ bool Icp2d::AlignGaussNewton(SE2& init_pose) {
             }
             float angle = source_scan_->angle_min + i * source_scan_->angle_increment;
             float theta = current_pose.so2().log();
-
+            // p^w = Twb * p^b
             Vec2d pw = current_pose * Vec2d(r * std::cos(angle), r * std::sin(angle));
             Point2d pt;
             pt.x = pw.x();
@@ -72,7 +72,7 @@ bool Icp2d::AlignGaussNewton(SE2& init_pose) {
         }
 
         cost /= effective_num;
-        // cost 小于 0?
+        // 确保了cost 是往下递减的，等于last_cost说明以及经迭代完了
         if (iter > 0 && cost >= last_cost) {
             break;
         }
