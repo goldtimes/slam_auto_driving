@@ -39,7 +39,13 @@ void LikelihoodField::SetTargetScan(Scan2d::Ptr scan) {
         }
     }
 }
-// 在点云的点附近附近
+/**
+ * @brief 在点云的点附近附近场，以点云的点为中心，半径为20的圆，离圆心越远，场的残差就越大
+ * 场随着距离的平方衰减，也可以用高斯衰减
+ * 当一个被测量的点落在场的附近，就可以直接将场的读数作为该店的误差
+ * 所以对target点云生成一个场，然后遍历source点云，找到source 点云的最邻近，那么可以知道source点云的点
+ * 落在target点云的点的场的位置，所以可以直接拿到误差.
+ */
 void LikelihoodField::BuildModel() {
     const int range = 20;  // 生成多少个像素的模板
     for (int x = -range; x <= range; ++x) {
@@ -93,7 +99,7 @@ bool LikelihoodField::AlignGaussNewton(SE2& init_pose) {
                 J << resolution_ * dx, resolution_ * dy,
                     -resolution_ * dx * r * std::sin(angle + theta) + resolution_ * dy * r * std::cos(angle + theta);
                 H += J * J.transpose();
-
+                // 直接将场的读数作为误差
                 float e = field_.at<float>(pf[1], pf[0]);
                 b += -J * e;
                 cost += e * e;
@@ -114,7 +120,7 @@ bool LikelihoodField::AlignGaussNewton(SE2& init_pose) {
         if (iter > 0 && cost >= last_cost) {
             break;
         }
-        LOG(INFO) << "iter " << iter << " cost = " << cost << ", effect num: " << effective_num;
+        // LOG(INFO) << "iter " << iter << " cost = " << cost << ", effect num: " << effective_num;
 
         current_pose.translation() += dx.head<2>();
         current_pose.so2() = current_pose.so2() * SO2::exp(dx[2]);
@@ -158,7 +164,7 @@ bool LikelihoodField::AlignG2O(SE2& init_pose) {
         auto edge = new EdgeSE2LikelihoodField(field_, r, angle, resolution_);
         edge->setVertex(0, v);
 
-        if (edge->isOutSide) {
+        if (edge->isOutSide()) {
             has_outside_pts_ = true;
             delete edge;
             continue;
@@ -188,5 +194,24 @@ cv::Mat LikelihoodField::GetFieldImage() {
     return image;
 }
 
-void LikelihoodField::SetFieldImageFromOccuMap(const cv::Mat& occu_map) {}
+void LikelihoodField::SetFieldImageFromOccuMap(const cv::Mat& occu_map) {
+    const int boarder = 25;
+    field_ = cv::Mat(1000, 1000, CV_8UC3, 30.0);
+    for (int x = boarder; x < field_.cols - boarder; ++x) {
+        for (int y = boarder; y < field_.rows - boarder; ++y) {
+            // 存在障碍物
+            if (occu_map.at<uchar>(y, x) < 127) {
+                // 在该点生成model
+                for (auto& model_pt : model_) {
+                    int xx = int(x + model_pt.dx_);
+                    int yy = int(y + model_pt.dy_);
+                    if (xx >= 0 && xx < field_.cols && yy >= 0 && yy < field_.rows && field_.at<float>(yy, xx) > model_pt.residual_) {
+                        // model距离点越大，残差越大
+                        field_.at<float>(yy, xx) = model_pt.residual_;
+                    }
+                }
+            }
+        }
+    }
+}
 }  // namespace lh
