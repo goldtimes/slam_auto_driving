@@ -18,7 +18,7 @@
                 "${workspaceFolder}/thirdparty",
                 "/usr/include/pcl-1.10",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/src/ch6"
+                "/usr/include/suitesparse"
             ]
         }
     ],

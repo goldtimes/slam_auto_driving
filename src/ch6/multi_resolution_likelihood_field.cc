@@ -101,7 +101,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
     const double range_th = 15.0;  // 不考虑太远的scan，不准
     const double rk_delta[] = {0.2, 0.3, 0.6, 0.8};
 
-    std::vector<EdgeSE2LikelihoodFiled*> edges;
+    std::vector<EdgeSE2LikelihoodField*> edges;
 
     // 遍历source
     for (size_t i = 0; i < source_->ranges.size(); ++i) {
@@ -119,7 +119,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
             continue;
         }
 
-        auto e = new EdgeSE2LikelihoodFiled(field_[level], r, angle, resolution_[level]);
+        auto e = new EdgeSE2LikelihoodField(field_[level], r, angle, resolution_[level]);
         e->setVertex(0, v);
 
         if (e->IsOutSide()) {
@@ -146,7 +146,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
 
     /// 计算edges中有多少inlier
     // chi2 为误差的平方 也就是去统计误差小于 rk_delta[level]
-    int num_inliers = std::accumulate(edges.begin(), edges.end(), 0, [&rk_delta, level](int num, EdgeSE2LikelihoodFiled* e) {
+    int num_inliers = std::accumulate(edges.begin(), edges.end(), 0, [&rk_delta, level](int num, EdgeSE2LikelihoodField* e) {
         if (e->level() == 0 && e->chi2() < rk_delta[level]) {
             return num + 1;
         }

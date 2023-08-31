@@ -1,7 +1,7 @@
-#include "ch6/mapping_2d.h"
-#include "ch6/lidar_2d_utils.h"
-// #include "ch6/loop_closing.h"
-#include "ch6/submap.h"
+#include "mapping_2d.h"
+#include "lidar_2d_utils.h"
+#include "loop_closing.h"
+#include "submap.h"
 
 #include <glog/logging.h>
 #include <execution>
@@ -16,8 +16,8 @@ bool Mapping2D::Init(bool with_loop_closing) {
     all_submaps_.emplace_back(current_submap_);
 
     if (with_loop_closing) {
-        // loop_closing_ = std::make_shared<LoopClosing>();
-        // loop_closing_->AddNewSubmap(current_submap_);
+        loop_closing_ = std::make_shared<LoopClosing>();
+        loop_closing_->AddNewSubmap(current_submap_);
     }
 
     return true;
@@ -56,9 +56,9 @@ bool Mapping2D::ProcessScan(Scan2d::Ptr scan) {
         current_submap_->AddScanInOccupancyMap(current_frame_);
 
         // 处理回环检测
-        // if (loop_closing_) {
-        //     loop_closing_->AddNewFrame(current_frame_);
-        // }
+        if (loop_closing_) {
+            loop_closing_->AddNewFrame(current_frame_);
+        }
 
         if (current_submap_->HasOutsidePoint() || (current_submap_->NumFrames()) > 50) {
             /// 走出了submap或者单个submap中的关键帧较多
@@ -119,9 +119,9 @@ void Mapping2D::AddKeyFrame() {
 
 void Mapping2D::ExpandSubmap() {
     // 当前submap作为历史地图放入loop closing
-    // if (loop_closing_) {
-    //     loop_closing_->AddFinishedSubmap(current_submap_);
-    // }
+    if (loop_closing_) {
+        loop_closing_->AddFinishedSubmap(current_submap_);
+    }
 
     // 将当前submap替换成新的
     auto last_submap = current_submap_;
@@ -139,9 +139,9 @@ void Mapping2D::ExpandSubmap() {
     current_submap_->AddScanInOccupancyMap(current_frame_);
     all_submaps_.emplace_back(current_submap_);
 
-    // if (loop_closing_) {
-    //     loop_closing_->AddNewSubmap(current_submap_);
-    // }
+    if (loop_closing_) {
+        loop_closing_->AddNewSubmap(current_submap_);
+    }
 
     LOG(INFO) << "create submap " << current_submap_->GetId() << " with pose: " << current_submap_->GetPose().translation().transpose() << ", "
               << current_submap_->GetPose().so2().log();
@@ -264,22 +264,22 @@ cv::Mat Mapping2D::ShowGlobalMap(int max_size) {
         }
     }
 
-    // if (loop_closing_) {
-    //     /// 回环检测的pose graph
-    //     auto loops = loop_closing_->GetLoops();
-    //     for (auto lc : loops) {
-    //         auto first_id = lc.first.first;
-    //         auto second_id = lc.first.second;
+    if (loop_closing_) {
+        //     /// 回环检测的pose graph
+        auto loops = loop_closing_->GetLoops();
+        for (auto lc : loops) {
+            auto first_id = lc.first.first;
+            auto second_id = lc.first.second;
 
-    //         Vec2f c1 = all_submaps_[first_id]->GetPose().translation().cast<float>();
-    //         Vec2f c2 = all_submaps_[second_id]->GetPose().translation().cast<float>();
+            Vec2f c1 = all_submaps_[first_id]->GetPose().translation().cast<float>();
+            Vec2f c2 = all_submaps_[second_id]->GetPose().translation().cast<float>();
 
-    //         Vec2f c1_map = (c1 - global_center) * global_map_resolution + center_image;
-    //         Vec2f c2_map = (c2 - global_center) * global_map_resolution + center_image;
+            Vec2f c1_map = (c1 - global_center) * global_map_resolution + center_image;
+            Vec2f c2_map = (c2 - global_center) * global_map_resolution + center_image;
 
-    //         cv::line(output_image, cv::Point2f(c1_map.x(), c1_map.y()), cv::Point2f(c2_map.x(), c2_map.y()), cv::Scalar(255, 0, 0), 2);
-    //     }
-    // }
+            cv::line(output_image, cv::Point2f(c1_map.x(), c1_map.y()), cv::Point2f(c2_map.x(), c2_map.y()), cv::Scalar(255, 0, 0), 2);
+        }
+    }
 
     return output_image;
 }

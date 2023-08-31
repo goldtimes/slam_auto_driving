@@ -10,6 +10,7 @@
 
 namespace lh {
 class Submap;
+class LoopClosing;
 
 class Mapping2D {
    public:
@@ -42,6 +43,7 @@ class Mapping2D {
     std::shared_ptr<Submap> current_submap_ = nullptr;
 
     std::vector<std::shared_ptr<Submap>> all_submaps_;
+    std::shared_ptr<LoopClosing> loop_closing_ = nullptr;  // 回环检测
 
     inline static constexpr double keyframe_pos_th_ = 0.3;              // 帧位移量
     inline static constexpr double keyframe_ang_th_ = 15 * M_PI / 180;  // 帧角度量

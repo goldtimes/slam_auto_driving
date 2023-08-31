@@ -21,6 +21,25 @@ class MRLikelihoodField {
 
     MRLikelihoodField() { BuildModel(); }
 
+    /// 从占据栅格地图生成一个似然场地图
+    void SetFieldImageFromOccuMap(const cv::Mat& occu_map);
+
+    /// 使用g2o配准，内部调用不同层级的图像进行配准
+    bool AlignG2O(SE2& init_pose);
+
+    /// 获取场函数，转换为RGB图像
+    std::vector<cv::Mat> GetFieldImage();
+
+    /// 设置中心（通常即submap中心）
+    void SetPose(const SE2& pose) { pose_ = pose; }
+
+    /// 设置匹配源
+    void SetSourceScan(Scan2d::Ptr scan) { source_ = scan; }
+
+    float Resolution(int level = 0) const { return resolution_[level]; }
+
+    int Levels() const { return levels_; }
+
    private:
     /**
      * 在某一层图像中配准

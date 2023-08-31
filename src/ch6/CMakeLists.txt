@@ -5,8 +5,8 @@ add_library(${PROJECT_NAME}.ch6
         occupancy_map.cc
         submap.cc
         mapping_2d.cc
-        # multi_resolution_likelihood_field.cc
-        # loop_closing.cc
+        multi_resolution_likelihood_field.cc
+        loop_closing.cc
         frame.cc
         )
 target_link_libraries(${PROJECT_NAME}.ch6
