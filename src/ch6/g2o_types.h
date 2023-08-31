@@ -36,7 +36,7 @@ class EdgeSE2LikelihoodField : public g2o::BaseUnaryEdge<1, double, VertexSE2> {
     /**
      * @brief 判断边是否在field_image外面
      */
-    bool isOutSide() {
+    bool IsOutSide() {
         VertexSE2* v = (VertexSE2*)_vertices[0];
         SE2 pose = v->estimate();
         Vec2d pw = pose * Vec2d(range_ * std::cos(angle_), range_ * std::sin(angle_));
