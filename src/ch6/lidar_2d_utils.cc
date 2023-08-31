@@ -20,7 +20,7 @@ void Visualize2DScan(Scan2d::Ptr scan, const SE2& pose, cv::Mat& image, const Ve
             continue;
         }
         // pose_submap 和 pose 是单位矩阵
-        // Tws.inverse() = Tsw  pw = Twb * pb   Tsw * pw = ps
+        // Tws.inverse() = Tsw  pw = Twc * pc   Tsw * pw = ps
         // 将每个激光点的坐标转到submap下
         Vec2d psubmap = pose_submap.inverse() * (pose * Vec2d(x, y));
         // 地图下的坐标到image坐标

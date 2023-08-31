@@ -11,6 +11,7 @@ namespace lh {
 
 bool Mapping2D::Init(bool with_loop_closing) {
     keyframe_id_ = 0;
+    // 创建第一个submap，Tws = SE2()
     current_submap_ = std::make_shared<Submap>(SE2());
     all_submaps_.emplace_back(current_submap_);
 
@@ -25,28 +26,33 @@ bool Mapping2D::Init(bool with_loop_closing) {
 // bool Mapping2D::ProcessScan(MultiScan2d::Ptr scan) { return ProcessScan(MultiToScan2d(scan)); }
 
 bool Mapping2D::ProcessScan(Scan2d::Ptr scan) {
+    // 创建frame
     current_frame_ = std::make_shared<Frame>(scan);
     current_frame_->id_ = frame_id_++;
-
+    // 显然第一帧这里不会处理
     if (last_frame_) {
         // set pose from last frame
         // current_frame_->pose_ = last_frame_->pose_;
-        current_frame_->pose_ = last_frame_->pose_ * motion_guess_;
-        current_frame_->pose_submap_ = last_frame_->pose_submap_;
+        // 上一帧的起始姿态 * 相对变换 = 这一帧的姿态Twc
+        current_frame_->pose_ = last_frame_->pose_ * motion_guess_;  // Twc
+        current_frame_->pose_submap_ = last_frame_->pose_submap_;    // Tws
     }
 
     // 利用scan matching来匹配地图
     if (!first_scan_) {
         // 第一帧无法匹配，直接加入到occupancy map
+        // 更新了current_frame_ 的 Twc 以及Tsc
         current_submap_->MatchScan(current_frame_);
     }
 
     // current_submap_->AddScanInOccupancyMap(current_frame_);
     first_scan_ = false;
+    // 第一帧为keyframe
     bool is_kf = IsKeyFrame();
 
     if (is_kf) {
         AddKeyFrame();
+        // 建立栅格地图和似然场
         current_submap_->AddScanInOccupancyMap(current_frame_);
 
         // 处理回环检测
@@ -62,6 +68,7 @@ bool Mapping2D::ProcessScan(Scan2d::Ptr scan) {
 
     /// 可视化输出
     auto occu_image = current_submap_->GetOccumap().GetOccupancyGridBlackWhite();
+    // current_frame_->pose_ = Twc current_submap_->GetPose()=Tws
     Visualize2DScan(current_frame_->scan_, current_frame_->pose_, occu_image, Vec3b(0, 0, 255), 1000, 20.0, current_submap_->GetPose());
     cv::putText(occu_image, "submap " + std::to_string(current_submap_->GetId()), cv::Point2f(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5,
                 cv::Scalar(0, 255, 0));
@@ -81,6 +88,7 @@ bool Mapping2D::ProcessScan(Scan2d::Ptr scan) {
     cv::waitKey(10);
 
     if (last_frame_) {
+        // 获得上一帧和这一帧的相对变换
         motion_guess_ = last_frame_->pose_.inverse() * current_frame_->pose_;
     }
 
@@ -249,6 +257,7 @@ cv::Mat Mapping2D::ShowGlobalMap(int max_size) {
                     cv::Scalar(255, 0, 0));
 
         // 轨迹
+        // 绘制的Twc
         for (const auto& frame : m->GetFrames()) {
             Vec2f p_map = (frame->pose_.translation().cast<float>() - global_center) * global_map_resolution + center_image;
             cv::circle(output_image, cv::Point2f(p_map.x(), p_map.y()), 1, cv::Scalar(0, 0, 255), 1);
