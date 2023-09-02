@@ -14,4 +14,15 @@ void VoxelGrid(CloudPtr cloud, float voxel_size) {
     voxel.filter(*output);
     cloud->swap(*output);
 }
+// 这里采用了模板函数的头文件分离，会出现问题
+template <typename CloudType>
+void SaveCloudToFile(const std::string &filePath, CloudType &cloud) {
+    cloud.height = 1;
+    cloud.width = cloud.size();
+    pcl::io::savePCDFileASCII(filePath, cloud);
+}
+// 需要实例化模板函数
+template void SaveCloudToFile<PointCloudType>(const std::string &filePath, PointCloudType &cloud);
+
+template void SaveCloudToFile<FullPointCloudType>(const std::string &filePath, FullPointCloudType &cloud);
 }  // namespace lh

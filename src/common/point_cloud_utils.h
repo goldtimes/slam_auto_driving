@@ -7,6 +7,10 @@ namespace lh {
 // 滤波
 void VoxelGrid(CloudPtr cloud, float voxel_size = 0.05);
 
+/// 写点云文件
+template <typename CloudType>
+void SaveCloudToFile(const std::string &filePath, CloudType &cloud);
+
 }  // namespace lh
 
 #endif

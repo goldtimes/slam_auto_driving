@@ -33,6 +33,16 @@ inline Eigen::Matrix<float, 3, 1> ToEigen(const PointType& pt) {
     return Vec3f(pt.x, pt.y, pt.z);
 }
 
+template <typename S>
+inline PointType ToPointType(const Eigen::Matrix<S, 3, 1>& pt) {
+    PointType p;
+    p.x = pt.x();
+    p.y = pt.y();
+    p.z = pt.z();
+
+    return p;
+}
+
 // 带ring,range等其他信息的全量信息点云
 struct FullPointType {
     PCL_ADD_POINT4D;
