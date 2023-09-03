@@ -18,7 +18,8 @@
                 "${workspaceFolder}/thirdparty",
                 "/usr/include/pcl-1.10",
                 "${workspaceFolder}/src",
-                "/usr/include/suitesparse"
+                "/usr/include/suitesparse",
+                "/usr/include/vtk-7.1"
             ]
         }
     ],

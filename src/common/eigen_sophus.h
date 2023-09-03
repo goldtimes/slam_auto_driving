@@ -104,6 +104,14 @@ inline bool less_vec<3>::operator()(const Eigen::Matrix<int, 3, 1>& v1, const Ei
     return v1[0] < v2[0] || (v1[0] == v2[0] && v1[1] < v2[1]) || (v1[0] == v2[0] && v1[1] == v2[1] && v1[2] < v2[2]);
 }
 
+template <typename S>
+inline SE3 Mat4ToSE3(const Eigen::Matrix<S, 4, 4>& m) {
+    /// 对R做归一化，防止sophus里的检查不过
+    Quatd q(m.template block<3, 3>(0, 0).template cast<double>());
+    q.normalize();
+    return SE3(q, m.template block<3, 1>(0, 3).template cast<double>());
+}
+
 }  // namespace lh
 
 #endif
