@@ -64,6 +64,30 @@ void ComputeMeanAndCovDiag(const C& data, D& mean, D& cov_diag, Getter&& getter)
     // clang-format on
 }
 
+/**
+ * 计算一个容器内数据的均值与矩阵形式协方差
+ * @tparam C    容器类型
+ * @tparam int 　数据维度
+ * @tparam Getter   获取数据函数, 接收一个容器内数据类型，返回一个Eigen::Matrix<double, dim,1> 矢量类型
+ */
+template <typename C, int dim, typename Getter>
+void ComputeMeanAndCov(const C& data, Eigen::Matrix<double, dim, 1>& mean, Eigen::Matrix<double, dim, dim>& cov, Getter&& getter) {
+    using D = Eigen::Matrix<double, dim, 1>;
+    using E = Eigen::Matrix<double, dim, dim>;
+    size_t len = data.size();
+    assert(len > 1);
+
+    // clang-format off
+    mean = std::accumulate(data.begin(), data.end(), Eigen::Matrix<double, dim, 1>::Zero().eval(),
+                           [&getter](const D& sum, const auto& data) -> D { return sum + getter(data); }) / len;
+    cov = std::accumulate(data.begin(), data.end(), E::Zero().eval(),
+                          [&mean, &getter](const E& sum, const auto& data) -> E {
+                              D v = getter(data) - mean;
+                              return sum + v * v.transpose();
+                          }) / (len - 1);
+    // clang-format on
+}
+
 template <typename S>
 bool FitPlane(std::vector<Eigen::Matrix<S, 3, 1>>& data, Eigen::Matrix<S, 4, 1>& plane_coeffs, double eps = 1e-2) {
     if (data.size() < 3)

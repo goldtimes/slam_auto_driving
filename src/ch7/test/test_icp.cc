@@ -7,6 +7,7 @@
 #include <pcl/registration/ndt.h>
 
 #include "ch7/icp_3d.h"
+#include "ch7/ndt_3d.h"
 #include "common/point_cloud_utils.h"
 #include "common/sys_utils.h"
 
@@ -101,4 +102,29 @@ int main(int argc, char** argv) {
             }
         },
         "ICP P2Plane", 1);
+
+    /// 第７章的NDT
+    evaluate_and_call(
+        [&]() {
+            lh::Ndt3d::Options options;
+            options.voxel_size_ = 0.5;
+            options.remove_centroid_ = true;
+            options.nearby_type_ = lh::Ndt3d::NearbyType::CENTER;
+            lh::Ndt3d ndt(options);
+            ndt.SetSource(source);
+            ndt.SetTarget(target);
+            ndt.SetGtPose(gt_pose);
+            SE3 pose;
+            success = ndt.AlignNdt(pose);
+            if (success) {
+                LOG(INFO) << "ndt align success, pose: " << pose.so3().unit_quaternion().coeffs().transpose() << ", "
+                          << pose.translation().transpose();
+                lh::CloudPtr source_trans(new lh::PointCloudType);
+                pcl::transformPointCloud(*source, *source_trans, pose.matrix().cast<float>());
+                lh::SaveCloudToFile("/home/slam_auto_driving/data/ch7/ndt_trans.pcd", *source_trans);
+            } else {
+                LOG(ERROR) << "align failed.";
+            }
+        },
+        "NDT", 1);
 }
