@@ -13,14 +13,14 @@ class Timer {
         TimerRecord() = default;
         TimerRecord(const std::string& function_name, double time_useage) {
             function_name_ = function_name;
-            time_useage_in_ms_.push_back(time_useage);
+            time_usage_in_ms_.push_back(time_useage);
         }
         std::string function_name_;
-        std::vector<double> time_useage_in_ms_;
+        std::vector<double> time_usage_in_ms_;
     };
 
     template <typename F>
-    static void Evalute(F&& func, const std::string& func_name) {
+    static void Evaluate(F&& func, const std::string& func_name) {
         auto t1 = std::chrono::steady_clock::now();
         // 完美转发并调用函数
         std::forward<F>(func)();
@@ -32,7 +32,7 @@ class Timer {
             // records_[func_name] = record;
             records_.insert({func_name, TimerRecord(func_name, time_useage)});
         } else {
-            records_[func_name].time_useage_in_ms_.emplace_back(time_useage);
+            records_[func_name].time_usage_in_ms_.emplace_back(time_useage);
         }
     }
 
