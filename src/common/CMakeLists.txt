@@ -1,6 +1,6 @@
 add_library(${PROJECT_NAME}.common
         io_utils.cc
-        # timer/timer.cc
+        timer/timer.cc
         global_flags.cc
         g2o_types.cc
         point_cloud_utils.cc

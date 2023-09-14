@@ -126,6 +126,7 @@ class RosbagIO {
         } else if (dataset_type_ == DatasetType::AVIA) {
             return *this;
         } else {
+            // [func](const rosbag::MessageInstance& m) 这个函数再GO中调用
             return AddHandler(GetLidarTopicName(), [func](const rosbag::MessageInstance& m) -> bool {
                 auto msg = m.instantiate<sensor_msgs::PointCloud2>();
 
