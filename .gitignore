@@ -44,17 +44,6 @@
 
 bin
 .idea
-data/ch6/frame*.txt
-data/ch6/*.png
-data/ch7/**.pcd
+
 **DS_Store
-
-data/ch9/**.pcd
-data/ch3/state.txt
-data/ch3/gins.txt
-data/ch3/gnss_output.txt
-data/ch4/gins_preintg.txt
-
-
 thirdparty
-data/*
