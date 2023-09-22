@@ -19,7 +19,8 @@
                 "/usr/include/pcl-1.10",
                 "${workspaceFolder}/src",
                 "/usr/include/suitesparse",
-                "/usr/include/vtk-7.1"
+                "/usr/include/vtk-7.1",
+                "${workspaceFolder}/build/devel/include"
             ]
         }
     ],

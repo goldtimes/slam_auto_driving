@@ -15,6 +15,13 @@ int main(int argc, char** argv) {
     lh::ui::PangolinWindow ui;
     ui.Init();
 
+    lh::CloudPtr source(new lh::PointCloudType);
+    pcl::io::loadPCDFile(fLS::FLAGS_source, *source);
+
+    LOG(INFO) << "set state";
+    ui.UpdateScan(source, SE3());
+
+    LOG(INFO) << "waiting";
     sleep(60);
     ui.Quit();
     return 0;

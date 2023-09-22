@@ -6,7 +6,7 @@
 
 #include <pangolin/gl/glvbo.h>
 
-namespace lh {
+namespace lh::ui {
 /**
  * @brief UI中使用的点云
  * 固定不变的点云可以用这个来渲染
@@ -53,6 +53,6 @@ class UiCloud {
     void BuildIntensityTable();
     static std::vector<Vec4f> intensity_color_table_pcl_;
 };
-}  // namespace lh
+}  // namespace lh::ui
 
 #endif

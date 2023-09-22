@@ -3,7 +3,7 @@
 #include <execution>
 #include <numeric>
 
-namespace lh {
+namespace lh::ui {
 std::vector<Vec4f> UiCloud::intensity_color_table_pcl_;
 UiCloud::UiCloud(CloudPtr cloud) { SetCloud(cloud, SE3()); }
 
@@ -79,4 +79,4 @@ void UiCloud::SetRenderColor(UiCloud::UseColor use_color) {
     }
 }
 
-}  // namespace lh
+}  // namespace lh::ui
