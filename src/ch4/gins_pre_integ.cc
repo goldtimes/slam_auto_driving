@@ -22,6 +22,7 @@ void GinsPreInteg::AddOdom(const Odom& odom) {
     last_odom_set_ = true;
 }
 void GinsPreInteg::AddGnss(const GNSS& gnss) {
+    // 用最新的imu时刻创建起始的状态量
     this_frame_ = std::make_shared<NavStated>(current_time_);
     this_gnss_ = gnss;
     if (!first_gnss_received_) {
@@ -93,8 +94,7 @@ void GinsPreInteg::Optimize() {
     using BlockSolverType = g2o::BlockSolverX;
     using LinearSolverType = g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType>;
 
-    auto* solver = new g2o::OptimizationAlgorithmLevenberg(
-        g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+    auto* solver = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
 
@@ -190,10 +190,8 @@ void GinsPreInteg::Optimize() {
 
     if (last_odom_set_) {
         // vel obs
-        double velo_l =
-            options_.wheel_radius_ * last_odom_.left_pulse_ / options_.circle_pulse_ * 2 * M_PI / options_.odom_span_;
-        double velo_r =
-            options_.wheel_radius_ * last_odom_.right_pulse_ / options_.circle_pulse_ * 2 * M_PI / options_.odom_span_;
+        double velo_l = options_.wheel_radius_ * last_odom_.left_pulse_ / options_.circle_pulse_ * 2 * M_PI / options_.odom_span_;
+        double velo_r = options_.wheel_radius_ * last_odom_.right_pulse_ / options_.circle_pulse_ * 2 * M_PI / options_.odom_span_;
         double average_vel = 0.5 * (velo_l + velo_r);
         vel_odom = Vec3d(average_vel, 0, 0);
         vel_world = this_frame_->R_ * vel_odom;
