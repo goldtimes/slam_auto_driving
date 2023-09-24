@@ -11,8 +11,8 @@ void DirectNDTLO::AddCloud(CloudPtr scan, SE3& pose) {
         local_map_.reset(new PointCloudType);
         // 拼接点云
         *local_map_ += *scan;
-        last_kf_pose_ = pose;
         pose = SE3();
+        last_kf_pose_ = pose;
 
         if (options_.use_pcl_ndt_) {
             ndt_pcl_.setInputTarget(local_map_);
@@ -41,7 +41,7 @@ void DirectNDTLO::AddCloud(CloudPtr scan, SE3& pose) {
         }
 
         if (options_.use_pcl_ndt_) {
-            ndt_pcl_.setInputCloud(local_map_);
+            ndt_pcl_.setInputTarget(local_map_);
         } else {
             ndt_.SetTarget(local_map_);
         }
