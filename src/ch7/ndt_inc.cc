@@ -50,6 +50,7 @@ void IncNdt3d::GenerateNearbyGrids() {
 }
 
 void IncNdt3d::UpdateVoxel(VoxelData& v) {
+    // LOG(INFO) << "v 可能是个nullptr报错";
     // 第一帧点云
     if (flag_first_scan_) {
         // 体素中的点云个数
@@ -63,6 +64,7 @@ void IncNdt3d::UpdateVoxel(VoxelData& v) {
         }
         v.ndt_estimated_ = true;
         v.pts_.clear();
+        // LOG(INFO) << "first scan, voxel: ";
         return;
     }
     // > 50个点
