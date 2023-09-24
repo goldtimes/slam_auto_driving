@@ -27,7 +27,16 @@ class DirectNDTLO {
         Ndt3d::Options ndt3d_options_;  // NDT3D的配置
     };
 
-    DirectNDTLO(Options options = Options()) : options_(options) {}
+    DirectNDTLO(Options options = Options()) : options_(options) {
+        if (options_.display_realtime_cloud_) {
+            viewer_ = std::make_shared<PCLMapViewer>(0.5);
+        }
+        ndt_ = Ndt3d(options_.ndt3d_options_);
+
+        ndt_pcl_.setResolution(1.0);
+        ndt_pcl_.setStepSize(0.1);
+        ndt_pcl_.setTransformationEpsilon(0.01);
+    }
 
     void AddCloud(CloudPtr scan, SE3& pose);
     void SaveMap(const std::string& map_path);

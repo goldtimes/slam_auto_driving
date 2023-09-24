@@ -12,7 +12,7 @@ namespace lh {
  * @brief IMU数据和雷达同步
  */
 struct MeasureGroup {
-    MeasureGroup() { this->lidar_.reset(new FullCloudPtr()); }
+    MeasureGroup() { this->lidar_.reset(new FullPointCloudType()); }
 
     double lidar_begin_time_ = 0;   // 雷达包的起始时间
     double lidar_end_time_ = 0;     // 雷达的终止时间
