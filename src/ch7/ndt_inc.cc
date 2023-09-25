@@ -17,7 +17,7 @@ void IncNdt3d::AddCloud(CloudPtr cloud_world) {
         auto iter = grids_.find(key);
         if (iter == grids_.end()) {
             //体素不存在
-            data_.push_back({key, {pt}});
+            data_.push_front({key, {pt}});
             grids_.insert({key, data_.begin()});
             // 如果大于100000个点
             if (data_.size() >= options_.capacity_) {
@@ -127,11 +127,11 @@ bool IncNdt3d::AlignNdt(SE3& init_pose) {
     for (int iter = 0; iter < options_.max_iteration_; ++iter) {
         std::vector<bool> effect_pts(total_size, false);
         std::vector<Eigen::Matrix<double, 3, 6>> jacobians(total_size);
-        std::vector<Vec3d> errors;
+        std::vector<Vec3d> errors(total_size);
         std::vector<Mat3d> infos(total_size);
 
         // 高斯牛顿迭代
-        std::for_each(std::execution::par_unseq, index.begin(), index.end(), [&, this](int idx) {
+        std::for_each(std::execution::par_unseq, index.begin(), index.end(), [&](int idx) {
             auto q = ToVec3d(source_->points[idx]);
             auto qs = pose * q;
 
@@ -151,7 +151,7 @@ bool IncNdt3d::AlignNdt(SE3& init_pose) {
                         effect_pts[real_idx] = false;
                         continue;
                     }
-
+                    // LOG(INFO) << "build res";
                     // build residual
                     Eigen::Matrix<double, 3, 6> J;
                     J.block<3, 3>(0, 0) = -pose.so3().matrix() * SO3::hat(q);
@@ -174,7 +174,7 @@ bool IncNdt3d::AlignNdt(SE3& init_pose) {
 
         Mat6d H = Mat6d::Zero();
         Vec6d err = Vec6d::Zero();
-
+        // assert(effect_pts.size() != 0);
         for (int idx = 0; idx < effect_pts.size(); ++idx) {
             if (!effect_pts[idx]) {
                 continue;

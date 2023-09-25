@@ -35,8 +35,16 @@ class IncNdt3d {
     // 体素内置结构
     struct VoxelData {
         VoxelData() {}
-        VoxelData(const Vec3d& pt) {}
-        void AddPoint(const Vec3d& pt) {}
+        VoxelData(const Vec3d& pt) {
+            pts_.emplace_back(pt);
+            num_pts_ = 1;
+        }
+        void AddPoint(const Vec3d& pt) {
+            pts_.emplace_back(pt);
+            if (!ndt_estimated_) {
+                num_pts_++;
+            }
+        }
 
         std::vector<Vec3d> pts_;       // 每个体素的内部点，多于一定数量之后再估计均值和协方差
         Vec3d mu_ = Vec3d::Zero();     // 均值
@@ -47,8 +55,14 @@ class IncNdt3d {
         int num_pts_ = 0;             // 总共的点数
     };
 
-    IncNdt3d() {}
-    IncNdt3d(Options options) : options_(options) {}
+    IncNdt3d() {
+        options_.inv_voxel_size_ = 1.0 / options_.voxel_size_;
+        GenerateNearbyGrids();
+    }
+    IncNdt3d(Options options) : options_(options) {
+        options_.inv_voxel_size_ = 1.0 / options_.voxel_size_;
+        GenerateNearbyGrids();
+    }
     // 获取体素个数
     int NumGrids() const { return grids_.size(); }
 
