@@ -194,6 +194,7 @@ class RosbagIO {
         return AddHandler(topic_name, [func, this](const rosbag::MessageInstance& m) -> bool {
             auto msg = m.instantiate<PacketsMsg>();
             if (msg == nullptr) {
+                LOG(INFO) << "msg == nullptr";
                 return false;
             }
             FullCloudPtr cloud(new FullPointCloudType);

@@ -1,9 +1,10 @@
 #include "feature_extraction.h"
 #include <glog/logging.h>
+#include <iostream>
 
 namespace lh {
 void FeatureExtraction::Extract(FullCloudPtr pc_in, CloudPtr pc_out_edge, CloudPtr pc_out_surf) {
-    LOG(ERROR) << "Extract start";
+    std::cout << "Extract start" << std::endl;
     int num_scans = 16;
     std::vector<CloudPtr> scans_in_each_line;  // 分线束的点云
     for (int i = 0; i < num_scans; ++i) {
