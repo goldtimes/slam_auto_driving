@@ -190,16 +190,17 @@ class RosbagIO {
     /**
      * @brief velodyne packets
      */
-    RosbagIO& AddVelodyneHandler(const std::string& topic_name, FullPointCloudHandler func) {
-        return AddHandler(topic_name, [func, this](const rosbag::MessageInstance& m) -> bool {
+    RosbagIO& AddVelodyneHandle(const std::string& topic_name, FullPointCloudHandler f) {
+        return AddHandler(topic_name, [f, this](const rosbag::MessageInstance& m) -> bool {
             auto msg = m.instantiate<PacketsMsg>();
             if (msg == nullptr) {
-                LOG(INFO) << "msg == nullptr";
                 return false;
             }
-            FullCloudPtr cloud(new FullPointCloudType);
+
+            FullCloudPtr cloud(new FullPointCloudType), cloud_out(new FullPointCloudType);
             vlp_parser_.ProcessScan(msg, cloud);
-            return func(cloud);
+
+            return f(cloud);
         });
     }
 

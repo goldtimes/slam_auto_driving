@@ -12,7 +12,7 @@
 #include "common/timer/timer.h"
 
 /// 这里需要vlp16的数据，用wxb的
-DEFINE_string(bag_path, "/media/kilox/PS2000/sad/wxb/test2.bag", "path to wxb bag");
+DEFINE_string(bag_path, "/media/kilox/PS2000/sad/wxb/test1.bag", "path to wxb bag");
 
 int main(int argc, char** argv) {
     google::InitGoogleLogging(argv[0]);
@@ -27,22 +27,15 @@ int main(int argc, char** argv) {
 
     lh::RosbagIO bag_io(fLS::FLAGS_bag_path);
     bag_io
-        .AddVelodyneHandler("/velodyne_packets_1",
-                            [&](lh::FullCloudPtr cloud) -> bool {
-                                std::cout << "fullcloudptr";
-                                lh::CloudPtr pcd_corner(new lh::PointCloudType), pcd_surf(new lh::PointCloudType);
-                                lh::Timer::Evaluate(
-                                    [&]() {
-                                        LOG(INFO) << "Evaluate";
-                                        feature_extraction.Extract(cloud, pcd_corner, pcd_surf);
-                                    },
-                                    "Feature Extraction");
-                                LOG(INFO) << "original pts:" << cloud->size() << ", corners: " << pcd_corner->size()
-                                          << ", surf: " << pcd_surf->size();
-                                lh::SaveCloudToFile("/home/slam_auto_driving/data/ch7/corner.pcd", *pcd_corner);
-                                lh::SaveCloudToFile("/home/slam_auto_driving/data/ch7/surf.pcd", *pcd_surf);
-                                return true;
-                            })
+        .AddVelodyneHandle("/velodyne_packets_1",
+                           [&](lh::FullCloudPtr cloud) -> bool {
+                               lh::CloudPtr pcd_corner(new lh::PointCloudType), pcd_surf(new lh::PointCloudType);
+                               lh::Timer::Evaluate([&]() { feature_extraction.Extract(cloud, pcd_corner, pcd_surf); }, "Feature Extraction");
+                               LOG(INFO) << "original pts:" << cloud->size() << ", corners: " << pcd_corner->size() << ", surf: " << pcd_surf->size();
+                               lh::SaveCloudToFile("/home/slam_auto_driving/data/ch7/corner.pcd", *pcd_corner);
+                               lh::SaveCloudToFile("/home/slam_auto_driving/data/ch7/surf.pcd", *pcd_surf);
+                               return true;
+                           })
         .Go();
 
     lh::Timer::PrintAll();

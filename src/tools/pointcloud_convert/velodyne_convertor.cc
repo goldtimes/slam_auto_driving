@@ -19,7 +19,6 @@ VelodyneConvertor::VelodyneConvertor(const VelodyneConfig &config) : velodyne_co
 }
 
 void VelodyneConvertor::ProcessScan(const PacketsMsgPtr &packets_msg, FullCloudPtr &out_cloud) {
-    LOG(INFO) << "ProcessScan";
     packets_parser_->PaddingPointCloud(packets_msg, out_cloud);
 }
 

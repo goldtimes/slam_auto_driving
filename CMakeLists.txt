@@ -3,9 +3,9 @@ project(slam_in_auto_driving)
 
 set(DEFAULT_BUILD_TYPE "Release")
 set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_FLAGS "-w")
-# set(CMAKE_CXX_FLAGS_RELEASE "-O2 -g -ggdb ${CMAKE_CXX_FLAGS}")
-# set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-w")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -g -ggdb ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS}")
 
 add_definitions("-DCATKIN_ENABLE_TESTING=0")
 # 设置了变量, 是更改了变量
