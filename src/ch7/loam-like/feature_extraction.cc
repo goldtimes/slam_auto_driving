@@ -3,6 +3,7 @@
 
 namespace lh {
 void FeatureExtraction::Extract(FullCloudPtr pc_in, CloudPtr pc_out_edge, CloudPtr pc_out_surf) {
+    LOG(ERROR) << "Extract start";
     int num_scans = 16;
     std::vector<CloudPtr> scans_in_each_line;  // 分线束的点云
     for (int i = 0; i < num_scans; ++i) {
@@ -61,10 +62,12 @@ void FeatureExtraction::Extract(FullCloudPtr pc_in, CloudPtr pc_out_edge, CloudP
             ExtractFromSector(scans_in_each_line[i], sub_cloud_curvature, pc_out_edge, pc_out_surf);
         }
     }
+    LOG(ERROR) << "Extract done";
 }
 
 void FeatureExtraction::ExtractFromSector(const CloudPtr& pc_in, std::vector<IdAndValue>& cloud_curvature, CloudPtr& pc_out_edge,
                                           CloudPtr& pc_out_surf) {
+    LOG(ERROR) << "ExtractFromSector start";
     // 按曲率排序
     std::sort(cloud_curvature.begin(), cloud_curvature.end(), [](const IdAndValue& a, const IdAndValue& b) {
         // 从小到大排列
@@ -120,6 +123,7 @@ void FeatureExtraction::ExtractFromSector(const CloudPtr& pc_in, std::vector<IdA
             pc_out_surf->push_back(pc_in->points[ind]);
         }
     }
+    LOG(ERROR) << "ExtractFromSector end";
 }
 
 }  // namespace lh
