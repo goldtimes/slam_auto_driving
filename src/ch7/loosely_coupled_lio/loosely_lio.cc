@@ -128,7 +128,7 @@ void LooselyLIO::Undistort() {
     scan_undistort_ = cloud;
 
     if (options_.save_motion_undistortion_pcd_) {
-        SaveCloudToFile("./data/ch7/after_undist.pcd", *cloud);
+        SaveCloudToFile("/home/slam_auto_driving/data/ch7/after_undist.pcd", *cloud);
     }
 }
 

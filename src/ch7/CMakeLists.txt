@@ -7,6 +7,10 @@ add_library(${PROJECT_NAME}.ch7
     gen_lidar_cloud.cc
     loam-like/feature_extraction.cc
     loam-like/loam_like_odom.cc
+
+    loosely_coupled_lio/loosely_lio.cc
+    loosely_coupled_lio/cloud_convert.cc
+    loosely_coupled_lio/measure_sync.cc
 #    
 )
 
@@ -71,16 +75,16 @@ target_link_libraries(test_loam_odom
         ${third_party_libs}
         )
 
-# add_executable(test_loosely_lio
-#         test/test_loosely_lio.cc
-#         )
+add_executable(test_loosely_lio
+        test/test_loosely_lio.cc
+        )
 
-# target_link_libraries(test_loosely_lio
-#         ${PROJECT_NAME}.ch5
-#         ${PROJECT_NAME}.ch7
-#         ${PROJECT_NAME}.common
-#         ${third_party_libs}
-#         )
+target_link_libraries(test_loosely_lio
+        ${PROJECT_NAME}.ch5
+        ${PROJECT_NAME}.ch7
+        ${PROJECT_NAME}.common
+        ${third_party_libs}
+        )
 
 add_executable(run_gen_simu_data
         test/run_gen_simu_data.cc

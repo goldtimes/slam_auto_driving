@@ -217,6 +217,69 @@ inline Eigen::Matrix<S, 3, 3> MatFromArray(const std::vector<S>& v) {
     m << v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8];
     return m;
 }
+/**
+ * pose 插值算法
+ * @tparam T    数据类型
+ * @tparam C 数据容器类型
+ * @tparam FT 获取时间函数
+ * @tparam FP 获取pose函数
+ * @param query_time 查找时间
+ * @param data  数据容器
+ * @param take_pose_func 从数据中取pose的谓词，接受一个数据，返回一个SE3
+ * @param result 查询结果
+ * @param best_match_iter 查找到的最近匹配
+ *
+ * NOTE 要求query_time必须在data最大时间和最小时间之间(容许0.5s内误差)
+ * data的map按时间排序
+ * @return
+ */
+template <typename T, typename C, typename FT, typename FP>
+inline bool PoseInterp(double query_time, C&& data, FT&& take_time_func, FP&& take_pose_func, SE3& result, T& best_match, float time_th = 0.5) {
+    if (data.empty()) {
+        LOG(INFO) << "cannot interp because data is empty. ";
+        return false;
+    }
+
+    double last_time = take_time_func(*data.rbegin());
+    // 查询的时间 > 队列中最晚的时间
+    if (query_time > last_time) {
+        if (query_time < (last_time + time_th)) {
+            result = take_pose_func(*data.rbegin());
+            best_match = *data.rbegin();
+            return true;
+        }
+        return false;
+    }
+    //   data1  < 查询的时间 < data2
+    auto match_iter = data.begin();
+    for (auto iter = data.begin(); iter != data.end(); ++iter) {
+        auto next_iter = iter;
+        next_iter++;
+
+        if (take_time_func(*iter) < query_time && take_time_func(*next_iter) >= query_time) {
+            match_iter = iter;
+            break;
+        }
+    }
+
+    auto match_iter_n = match_iter;
+    match_iter_n++;
+
+    double dt = take_time_func(*match_iter_n) - take_time_func(*match_iter);
+    double s = (query_time - take_time_func(*match_iter)) / dt;  // s=0 时为第一帧，s=1时为next
+    // 出现了 dt为0的bug
+    if (fabs(dt) < 1e-6) {
+        best_match = *match_iter;
+        result = take_pose_func(*match_iter);
+        return true;
+    }
+
+    SE3 pose_first = take_pose_func(*match_iter);
+    SE3 pose_next = take_pose_func(*match_iter_n);
+    result = {pose_first.unit_quaternion().slerp(s, pose_next.unit_quaternion()), pose_first.translation() * (1 - s) + pose_next.translation() * s};
+    best_match = s < 0.5 ? *match_iter : *match_iter_n;
+    return true;
+}
 
 }  // namespace lh::math
 
