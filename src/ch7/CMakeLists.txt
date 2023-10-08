@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME}.ch7
     incremental_ndt_lo.cc
     gen_lidar_cloud.cc
     loam-like/feature_extraction.cc
+    loam-like/loam_like_odom.cc
 #    
 )
 
@@ -59,16 +60,16 @@ target_link_libraries(test_feature_extraction
         ${PROJECT_NAME}.common
         ${third_party_libs}
         )
-# add_executable(test_loam_odom
-#         test/test_loam_odom.cc
-#         )
+add_executable(test_loam_odom
+        test/test_loam_odom.cc
+        )
 
-# target_link_libraries(test_loam_odom
-#         ${PROJECT_NAME}.ch5
-#         ${PROJECT_NAME}.ch7
-#         ${PROJECT_NAME}.common
-#         ${third_party_libs}
-#         )
+target_link_libraries(test_loam_odom
+        ${PROJECT_NAME}.ch5
+        ${PROJECT_NAME}.ch7
+        ${PROJECT_NAME}.common
+        ${third_party_libs}
+        )
 
 # add_executable(test_loosely_lio
 #         test/test_loosely_lio.cc

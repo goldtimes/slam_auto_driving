@@ -1,5 +1,9 @@
-#include "ch7/loam-like/feature_extraction.h"
+//
+// Created by xiang on 2022/7/25.
+//
+
 #include "ch7/loam-like/loam_like_odom.h"
+#include "ch7/loam-like/feature_extraction.h"
 #include "common/lidar_utils.h"
 #include "common/math_utils.h"
 #include "common/point_cloud_utils.h"
@@ -7,9 +11,10 @@
 #include <execution>
 
 namespace lh {
+
 LoamLikeOdom::LoamLikeOdom(LoamLikeOdom::Options options)
-    : options_(options), feature_extraction_(new FeatureExtraction()), global_map_(new PointCloudType()) {
-    if (options.display_realtime_cloud_) {
+    : options_(options), feature_extraction_(new FeatureExtraction), global_map_(new PointCloudType()) {
+    if (options_.display_realtime_cloud_) {
         viewer_ = std::make_shared<PCLMapViewer>(0.1);
     }
 
@@ -18,44 +23,45 @@ LoamLikeOdom::LoamLikeOdom(LoamLikeOdom::Options options)
 }
 
 void LoamLikeOdom::ProcessPointCloud(FullCloudPtr cloud) {
-    LOG(INFO) << "Processing frmae" << cnt_frame_++;
-    // 提取特征
-    CloudPtr current_edge(new PointCloudType);
-    CloudPtr current_surf(new PointCloudType);
+    LOG(INFO) << "processing frame " << cnt_frame_++;
+    // step 1. 提特征
+    CloudPtr current_edge(new PointCloudType), current_surf(new PointCloudType);
     feature_extraction_->Extract(cloud, current_edge, current_surf);
 
     if (current_edge->size() < options_.min_edge_pts_ || current_surf->size() < options_.min_surf_pts_) {
-        LOG(ERROR) << "Not enough edge/surf pts:" << current_edge->size() << "," << current_surf->size();
+        LOG(ERROR) << "not enough edge/surf pts: " << current_edge->size() << "," << current_surf->size();
         return;
     }
-    LOG(INFO) << "Edge pts:" << current_edge->size() << ", surf:" << current_surf->size();
 
-    // 构建地图
+    LOG(INFO) << "edge: " << current_edge->size() << ", surf: " << current_surf->size();
+
     if (local_map_edge_ == nullptr || local_map_surf_ == nullptr) {
         // 首帧特殊处理
         local_map_edge_ = current_edge;
         local_map_surf_ = current_surf;
+
         kdtree_edge_.BuildTree(local_map_edge_);
-        kdtree_edge_.BuildTree(local_map_surf_);
+        kdtree_surf_.BuildTree(local_map_surf_);
 
         edges_.emplace_back(current_edge);
         surfs_.emplace_back(current_surf);
         return;
     }
 
-    // 与局部地图配准
+    /// 与局部地图配准
     SE3 pose = AlignWithLocalMap(current_edge, current_surf);
     CloudPtr scan_world(new PointCloudType);
     pcl::transformPointCloud(*ConvertToCloud<FullPointType>(cloud), *scan_world, pose.matrix());
 
-    CloudPtr edge_world(new PointCloudType);
-    CloudPtr surf_world(new PointCloudType);
+    CloudPtr edge_world(new PointCloudType), surf_world(new PointCloudType);
     pcl::transformPointCloud(*current_edge, *edge_world, pose.matrix());
     pcl::transformPointCloud(*current_surf, *surf_world, pose.matrix());
-    if (IsKeyFrame(pose)) {
-        LOG(INFO) << "insert keyframe";
+
+    if (IsKeyframe(pose)) {
+        LOG(INFO) << "inserting keyframe";
         last_kf_pose_ = pose;
         last_kf_id_ = cnt_frame_;
+
         // 重建local map
         edges_.emplace_back(edge_world);
         surfs_.emplace_back(surf_world);
@@ -67,82 +73,75 @@ void LoamLikeOdom::ProcessPointCloud(FullCloudPtr cloud) {
             surfs_.pop_front();
         }
 
-        local_map_surf_.reset(new PointCloudType());
-        local_map_edge_.reset(new PointCloudType());
+        local_map_surf_.reset(new PointCloudType);
+        local_map_edge_.reset(new PointCloudType);
 
-        for (auto& surf : surfs_) {
-            *local_map_surf_ += *surf;
+        for (auto& s : edges_) {
+            *local_map_edge_ += *s;
         }
-        for (auto& edge : edges_) {
-            *local_map_edge_ += *edge;
-        }
-
-        // 更新局部地图
-        local_map_edge_.reset(new PointCloudType());
-        local_map_surf_.reset(new PointCloudType());
-        for (auto& surf : surfs_) {
-            *local_map_surf_ += *surf;
-        }
-        for (auto& edge : edges_) {
-            *local_map_edge_ += *edge;
+        for (auto& s : surfs_) {
+            *local_map_surf_ += *s;
         }
 
         local_map_surf_ = VoxelCloud(local_map_surf_, 1.0);
         local_map_edge_ = VoxelCloud(local_map_edge_, 1.0);
 
-        LOG(INFO) << "insert keyframe, surf pts: " << local_map_surf_->size() << ", edge pts:" << local_map_edge_->size();
+        LOG(INFO) << "insert keyframe, surf pts: " << local_map_surf_->size() << ", edge pts: " << local_map_edge_->size();
 
-        kdtree_edge_.BuildTree(local_map_edge_);
         kdtree_surf_.BuildTree(local_map_surf_);
+        kdtree_edge_.BuildTree(local_map_edge_);
 
         *global_map_ += *scan_world;
     }
+
     LOG(INFO) << "current pose: " << pose.translation().transpose() << ", " << pose.so3().unit_quaternion().coeffs().transpose();
+
     if (viewer_ != nullptr) {
         viewer_->SetPoseAndCloud(pose, scan_world);
     }
 }
 
-bool LoamLikeOdom::IsKeyFrame(const SE3& current_pose) {
+bool LoamLikeOdom::IsKeyframe(const SE3& current_pose) {
     if ((cnt_frame_ - last_kf_id_) > 30) {
         return true;
     }
 
+    // 只要与上一帧相对运动超过一定距离或角度，就记关键帧
     SE3 delta = last_kf_pose_.inverse() * current_pose;
     return delta.translation().norm() > options_.kf_distance_ || delta.so3().log().norm() > options_.kf_angle_deg_ * math::kDEG2RAD;
 }
 
 SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
-    // ICP
+    // 这部分的ICP需要自己写
     SE3 pose;
     if (estimated_poses_.size() >= 2) {
-        // 从最近的两个pose来推断
+        // 从最近两个pose来推断
         SE3 T1 = estimated_poses_[estimated_poses_.size() - 1];
         SE3 T2 = estimated_poses_[estimated_poses_.size() - 2];
-
         pose = T1 * (T2.inverse() * T1);
     }
 
     int edge_size = edge->size();
     int surf_size = surf->size();
 
+    // 我们来写一些并发代码
     for (int iter = 0; iter < options_.max_iteration_; ++iter) {
         std::vector<bool> effect_surf(surf_size, false);
-        std::vector<Eigen::Matrix<double, 1, 6>> jacob_surf(surf_size);  //点到面的残差
+        std::vector<Eigen::Matrix<double, 1, 6>> jacob_surf(surf_size);  // 点面的残差是1维的
         std::vector<double> errors_surf(surf_size);
 
         std::vector<bool> effect_edge(edge_size, false);
-        std::vector<Eigen::Matrix<double, 3, 6>> jacob_edge(surf_size);  //点到线的残差
-        std::vector<Vec3d> errors_edge(surf_size);
+        std::vector<Eigen::Matrix<double, 3, 6>> jacob_edge(edge_size);  // 点线的残差是3维的
+        std::vector<Vec3d> errors_edge(edge_size);
 
         std::vector<int> index_surf(surf_size);
-        // 填入0
-        std::iota(index_surf.begin(), index_surf.end(), 0);
+        std::iota(index_surf.begin(), index_surf.end(), 0);  // 填入
         std::vector<int> index_edge(edge_size);
-        std::iota(index_edge.begin(), index_edge.end(), 0);
+        std::iota(index_edge.begin(), index_edge.end(), 0);  // 填入
 
+        // gauss-newton 迭代
+        // 最近邻，角点部分
         if (options_.use_edge_points_) {
-            // 角点
             std::for_each(std::execution::par_unseq, index_edge.begin(), index_edge.end(), [&](int idx) {
                 Vec3d q = ToVec3d(edge->points[idx]);
                 Vec3d qs = pose * q;
@@ -160,12 +159,11 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
                     }
 
                     // point to point residual
-                    // 估计直线的参数
                     Vec3d d, p0;
-                    if (!math::FitLine(nn_eigen, d, p0, options_.max_line_distance_)) {
+                    if (!math::FitLine(nn_eigen, p0, d, options_.max_line_distance_)) {
                         return;
                     }
-                    // 距离直线的距离
+
                     Vec3d err = SO3::hat(d) * (qs - p0);
                     if (err.norm() > options_.max_line_distance_) {
                         return;
@@ -184,7 +182,7 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
             });
         }
 
-        // 平面点
+        /// 最近邻，平面点部分
         if (options_.use_surf_points_) {
             std::for_each(std::execution::par_unseq, index_surf.begin(), index_surf.end(), [&](int idx) {
                 Vec3d q = ToVec3d(surf->points[idx]);
@@ -225,7 +223,9 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
                 }
             });
         }
-        // 累加Hessian
+
+        // 累加Hessian和error,计算dx
+        // 原则上可以用reduce并发，写起来比较麻烦，这里写成accumulate
         double total_res = 0;
         int effective_num = 0;
 
@@ -236,7 +236,6 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
             if (effect_surf[idx]) {
                 H += jacob_surf[idx].transpose() * jacob_surf[idx];
                 err += -jacob_surf[idx].transpose() * errors_surf[idx];
-
                 effective_num++;
                 total_res += errors_surf[idx] * errors_surf[idx];
             }
@@ -259,6 +258,7 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
         Vec6d dx = H.inverse() * err;
         pose.so3() = pose.so3() * SO3::exp(dx.head<3>());
         pose.translation() += dx.tail<3>();
+
         // 更新
         LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num << ", mean res: " << total_res / effective_num
                   << ", dxn: " << dx.norm();
@@ -268,6 +268,7 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
             break;
         }
     }
+
     estimated_poses_.emplace_back(pose);
     return pose;
 }
