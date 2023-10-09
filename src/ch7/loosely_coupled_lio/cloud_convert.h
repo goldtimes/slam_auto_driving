@@ -1,14 +1,20 @@
 #pragma once
 
 #include <livox_ros_driver/CustomMsg.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
+
 #include "common/point_types.h"
 
 namespace lh {
+
 /**
- * 预处理点云类，将velodyne, outster, avia等数据转到FullCloud
+ * 预处理雷达点云
+ *
+ * 将Velodyne, ouster, avia等数据转到FullCloud
+ * 该类由MessageSync类持有，负责将收到的雷达消息与IMU同步并预处理后，再交给LO/LIO算法
  */
 class CloudConvert {
    public:

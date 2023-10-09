@@ -1,23 +1,26 @@
 #include <yaml-cpp/yaml.h>
 #include <execution>
-#include "common/lidar_utils.h"
-#include "common/timer/timer.h"
 
+#include "common/lidar_utils.h"
 #include "common/point_cloud_utils.h"
+#include "common/timer/timer.h"
 #include "loosely_lio.h"
 
 namespace lh {
-LooselyLIO::LooselyLIO(const Options& options) : options_(options) {
+
+LooselyLIO::LooselyLIO(Options options) : options_(options) {
     StaticImuInit::Options imu_init_options;
-    imu_init_options.use_speed_for_static_checking_ = false;
+    imu_init_options.use_speed_for_static_checking_ = false;  // 本节数据不需要轮速计
     imu_init_ = StaticImuInit(imu_init_options);
 }
 
-bool LooselyLIO::Init(const std::string& config_yaml) {
+bool LooselyLIO::Init(const std::string &config_yaml) {
+    /// 初始化自身的参数
     if (!LoadFromYAML(config_yaml)) {
         return false;
     }
 
+    /// 初始化NDT LO的参数
     IncrementalNDTLO::Options indt_options;
     indt_options.display_realtime_cloud_ = false;  // 这个程序自己有UI，不用PCL中的
     inc_ndt_lo_ = std::make_shared<IncrementalNDTLO>(indt_options);
@@ -31,9 +34,9 @@ bool LooselyLIO::Init(const std::string& config_yaml) {
     return true;
 }
 
-bool LooselyLIO::LoadFromYAML(const std::string& yaml_file) {
+bool LooselyLIO::LoadFromYAML(const std::string &yaml_file) {
     // get params from yaml
-    sync_ = std::make_shared<MessageSync>([this](const MeasureGroup& m) { ProcessMeasurements(m); });
+    sync_ = std::make_shared<MessageSync>([this](const MeasureGroup &m) { ProcessMeasurements(m); });
     sync_->Init(yaml_file);
 
     /// 自身参数主要是雷达与IMU外参
@@ -47,7 +50,7 @@ bool LooselyLIO::LoadFromYAML(const std::string& yaml_file) {
     return true;
 }
 
-void LooselyLIO::ProcessMeasurements(const MeasureGroup& meas) {
+void LooselyLIO::ProcessMeasurements(const MeasureGroup &meas) {
     LOG(INFO) << "call meas, imu: " << meas.imu_.size() << ", lidar pts: " << meas.lidar_->size();
     measures_ = meas;
 
@@ -67,6 +70,17 @@ void LooselyLIO::ProcessMeasurements(const MeasureGroup& meas) {
     Align();
 }
 
+void LooselyLIO::Predict() {
+    imu_states_.clear();
+    imu_states_.emplace_back(eskf_.GetNomialState());
+
+    /// 对IMU状态进行预测
+    for (auto &imu : measures_.imu_) {
+        eskf_.Predict(*imu);
+        imu_states_.emplace_back(eskf_.GetNomialState());
+    }
+}
+
 void LooselyLIO::TryInitIMU() {
     for (auto imu : measures_.imu_) {
         imu_init_.AddIMU(*imu);
@@ -74,7 +88,7 @@ void LooselyLIO::TryInitIMU() {
 
     if (imu_init_.InitSuccess()) {
         // 读取初始零偏，设置ESKF
-        lh::ESKFD::Options options;
+        ESKFD::Options options;
         // 噪声由初始化器估计
         options.gyro_var_ = sqrt(imu_init_.GetGovGyro()[0]);
         options.acce_var_ = sqrt(imu_init_.GetGovAcce()[0]);
@@ -85,21 +99,6 @@ void LooselyLIO::TryInitIMU() {
     }
 }
 
-void LooselyLIO::Predict() {
-    imu_states_.clear();
-    imu_states_.emplace_back(eskf_.GetNomialState());
-
-    /// 对IMU状态进行预测
-    for (auto& imu : measures_.imu_) {
-        eskf_.Predict(*imu);
-        imu_states_.emplace_back(eskf_.GetNomialState());
-    }
-}
-
-/**
- * imu预测位姿的运动补偿
- * 7.30
- */
 void LooselyLIO::Undistort() {
     auto cloud = measures_.lidar_;
     auto imu_state = eskf_.GetNomialState();  // 最后时刻的状态
@@ -110,13 +109,13 @@ void LooselyLIO::Undistort() {
     }
 
     /// 将所有点转到最后时刻状态上
-    std::for_each(std::execution::par_unseq, cloud->points.begin(), cloud->points.end(), [&](auto& pt) {
+    std::for_each(std::execution::par_unseq, cloud->points.begin(), cloud->points.end(), [&](auto &pt) {
         SE3 Ti = T_end;
         NavStated match;
 
         // 根据pt.time查找时间，pt.time是该点打到的时间与雷达开始时间之差，单位为毫秒
-        math::PoseInterp<NavStated>(measures_.lidar_begin_time_ + pt.time * 1e-3, imu_states_, [](const NavStated& s) { return s.timestamp_; },
-                                    [](const NavStated& s) { return s.GetSE3(); }, Ti, match);
+        math::PoseInterp<NavStated>(measures_.lidar_begin_time_ + pt.time * 1e-3, imu_states_, [](const NavStated &s) { return s.timestamp_; },
+                                    [](const NavStated &s) { return s.GetSE3(); }, Ti, match);
 
         Vec3d pi = ToVec3d(pt);
         Vec3d p_compensate = TIL_.inverse() * T_end.inverse() * Ti * TIL_ * pi;
@@ -128,13 +127,12 @@ void LooselyLIO::Undistort() {
     scan_undistort_ = cloud;
 
     if (options_.save_motion_undistortion_pcd_) {
-        SaveCloudToFile("/home/slam_auto_driving/data/ch7/after_undist.pcd", *cloud);
+        SaveCloudToFile("./data/ch7/after_undist.pcd", *cloud);
     }
 }
 
 void LooselyLIO::Align() {
     FullCloudPtr scan_undistort_trans(new FullPointCloudType);
-    // 转到imu坐标系下的点云
     pcl::transformPointCloud(*scan_undistort_, *scan_undistort_trans, TIL_.matrix());
     scan_undistort_ = scan_undistort_trans;
 
@@ -164,15 +162,15 @@ void LooselyLIO::Align() {
 
     if (options_.with_ui_) {
         // 放入UI
-        // ui_->UpdateScan(current_scan, eskf_.GetNomialSE3());  // 转成Lidar Pose传给UI
+        ui_->UpdateScan(current_scan, eskf_.GetNomialSE3());  // 转成Lidar Pose传给UI
         ui_->UpdateNavState(eskf_.GetNomialState());
     }
     frame_num_++;
 }
 
-void LooselyLIO::PCLCallBack(const sensor_msgs::PointCloud2::ConstPtr& msg) { sync_->ProcessCloud(msg); }
+void LooselyLIO::PCLCallBack(const sensor_msgs::PointCloud2::ConstPtr &msg) { sync_->ProcessCloud(msg); }
 
-void LooselyLIO::LivoxPCLCallBack(const livox_ros_driver::CustomMsg::ConstPtr& msg) { sync_->ProcessCloud(msg); }
+void LooselyLIO::LivoxPCLCallBack(const livox_ros_driver::CustomMsg::ConstPtr &msg) { sync_->ProcessCloud(msg); }
 
 void LooselyLIO::IMUCallBack(IMUPtr msg_in) { sync_->ProcessIMU(msg_in); }
 
