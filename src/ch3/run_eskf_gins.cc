@@ -38,9 +38,7 @@ int main(int argc, char** argv) {
     Vec2d antenna_pos(FLAGS_antenna_pox_x, FLAGS_antenna_pox_y);
 
     auto save_vec3 = [](std::ofstream& fout, const Vec3d& v) { fout << v[0] << " " << v[1] << " " << v[2] << " "; };
-    auto save_quat = [](std::ofstream& fout, const Quatd& q) {
-        fout << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << " ";
-    };
+    auto save_quat = [](std::ofstream& fout, const Quatd& q) { fout << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << " "; };
 
     auto save_result = [&save_vec3, &save_quat](std::ofstream& fout, const lh::NavStated& save_state) {
         fout << std::setprecision(18) << save_state.timestamp_ << " " << std::setprecision(9);
@@ -90,7 +88,7 @@ int main(int argc, char** argv) {
 
           eskf.Predict(imu);
 
-          auto state = eskf.GetNomialState();
+          auto state = eskf.GetNominalState();
           if (ui) {
               ui->UpdateNavState(state);
           }
@@ -117,7 +115,7 @@ int main(int argc, char** argv) {
             gnss_convert.utm_pose_.translation() -= origin;
             // 加入观测
             eskf.ObserveGps(gnss_convert);
-            auto state = eskf.GetNomialState();
+            auto state = eskf.GetNominalState();
             if (ui) {
                 ui->UpdateNavState(state);
             }

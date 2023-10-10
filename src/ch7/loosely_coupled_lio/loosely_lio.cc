@@ -72,12 +72,12 @@ void LooselyLIO::ProcessMeasurements(const MeasureGroup &meas) {
 
 void LooselyLIO::Predict() {
     imu_states_.clear();
-    imu_states_.emplace_back(eskf_.GetNomialState());
+    imu_states_.emplace_back(eskf_.GetNominalState());
 
     /// 对IMU状态进行预测
     for (auto &imu : measures_.imu_) {
         eskf_.Predict(*imu);
-        imu_states_.emplace_back(eskf_.GetNomialState());
+        imu_states_.emplace_back(eskf_.GetNominalState());
     }
 }
 
@@ -101,7 +101,7 @@ void LooselyLIO::TryInitIMU() {
 
 void LooselyLIO::Undistort() {
     auto cloud = measures_.lidar_;
-    auto imu_state = eskf_.GetNomialState();  // 最后时刻的状态
+    auto imu_state = eskf_.GetNominalState();  // 最后时刻的状态
     SE3 T_end = SE3(imu_state.R_, imu_state.p_);
 
     if (options_.save_motion_undistortion_pcd_) {
@@ -155,15 +155,15 @@ void LooselyLIO::Align() {
     }
 
     /// 从EKF中获取预测pose，放入LO，获取LO位姿，最后合入EKF
-    SE3 pose_predict = eskf_.GetNomialSE3();
+    SE3 pose_predict = eskf_.GetNominalSE3();
     inc_ndt_lo_->AddCloud(current_scan_filter, pose_predict, true);
     pose_of_lo_ = pose_predict;
     eskf_.ObserveSE3(pose_of_lo_, 1e-2, 1e-2);
 
     if (options_.with_ui_) {
         // 放入UI
-        ui_->UpdateScan(current_scan, eskf_.GetNomialSE3());  // 转成Lidar Pose传给UI
-        ui_->UpdateNavState(eskf_.GetNomialState());
+        ui_->UpdateScan(current_scan, eskf_.GetNominalSE3());  // 转成Lidar Pose传给UI
+        ui_->UpdateNavState(eskf_.GetNominalState());
     }
     frame_num_++;
 }
