@@ -1,3 +1,7 @@
+//
+// Created by xiang on 2022/7/20.
+//
+
 #ifndef SLAM_IN_AUTO_DRIVING_INCREMENTAL_NDT_LO_H
 #define SLAM_IN_AUTO_DRIVING_INCREMENTAL_NDT_LO_H
 
@@ -7,6 +11,7 @@
 #include "tools/pcl_map_viewer.h"
 
 namespace lh {
+
 /**
  * 使用直接NDT方法进行递推的Lidar Odometry
  * 使用历史几个关键帧作为local map，进行NDT定位
@@ -53,6 +58,7 @@ class IncrementalNDTLO {
     IncNdt3d ndt_;
     std::shared_ptr<PCLMapViewer> viewer_ = nullptr;
 };
+
 }  // namespace lh
 
-#endif
+#endif  // SLAM_IN_AUTO_DRIVING_INCREMENTAL_NDT_LO_H
