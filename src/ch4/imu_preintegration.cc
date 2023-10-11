@@ -60,15 +60,11 @@ void IMUPreintegration::Integrate(const IMU& imu, double dt) {
     dt_ += dt;
 }
 
-SO3 IMUPreintegration::GetDeltaRoation(const Vec3d& bg) { return dR_ * SO3::exp(dR_dbg_ * (bg * bg_)); }
+SO3 IMUPreintegration::GetDeltaRoation(const Vec3d& bg) { return dR_ * SO3::exp(dR_dbg_ * (bg - bg_)); }
 
-Vec3d IMUPreintegration::GetDeltaVelocity(const Vec3d& bg, const Vec3d& ba) {
-    return dv_ + dv_dbg_ * (bg - bg_) + dv_dba_ * (ba - ba_);
-}
+Vec3d IMUPreintegration::GetDeltaVelocity(const Vec3d& bg, const Vec3d& ba) { return dv_ + dv_dbg_ * (bg - bg_) + dv_dba_ * (ba - ba_); }
 
-Vec3d IMUPreintegration::GetDeltaPosition(const Vec3d& bg, const Vec3d& ba) {
-    return dp_ + dp_dbg_ * (bg - bg_) + dp_dba_ * (ba - ba_);
-}
+Vec3d IMUPreintegration::GetDeltaPosition(const Vec3d& bg, const Vec3d& ba) { return dp_ + dp_dbg_ * (bg - bg_) + dp_dba_ * (ba - ba_); }
 
 NavStated IMUPreintegration::Predict(const lh::NavStated& start, const Vec3d& grav) const {
     SO3 Rj = start.R_ * dR_;

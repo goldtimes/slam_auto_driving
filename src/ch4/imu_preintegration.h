@@ -23,7 +23,7 @@ class IMUPreintegration {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // 参数配置项
     struct Options {
-        Options();
+        Options() {}
         Vec3d init_bg_ = Vec3d::Zero();  // 初始零偏
         Vec3d init_ba_ = Vec3d::Zero();  // 初始零偏
         double noise_gyro_ = 1e-2;       // 陀螺仪噪声

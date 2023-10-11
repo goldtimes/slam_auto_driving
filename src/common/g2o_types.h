@@ -241,6 +241,80 @@ class EdgeEncoder3D : public g2o::BaseUnaryEdge<3, Vec3d, VertexVelocity> {
     virtual bool write(std::ostream& out) const { return true; }
 };
 
+/**
+ * NDT误差模型
+ * 残差是 Rp+t-mu，info为NDT内部估计的info
+ */
+class EdgeNDT : public g2o::BaseUnaryEdge<3, Vec3d, VertexPose> {
+   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EdgeNDT() = default;
+
+    /// 需要查询NDT内部的体素，这里用一个函数式给设置过去
+    using QueryVoxelFunc = std::function<bool(const Vec3d& query_pt, Vec3d& mu, Mat3d& info)>;
+
+    EdgeNDT(VertexPose* v0, const Vec3d& pt, QueryVoxelFunc func) {
+        setVertex(0, v0);
+        pt_ = pt;
+        query_ = func;
+
+        Vec3d q = v0->estimate().so3() * pt_ + v0->estimate().translation();
+        if (query_(q, mu_, info_)) {
+            setInformation(info_);
+            valid_ = true;
+        } else {
+            valid_ = false;
+        }
+    }
+
+    bool IsValid() const { return valid_; }
+
+    Mat6d GetHessian() {
+        linearizeOplus();
+        return _jacobianOplusXi.transpose() * info_ * _jacobianOplusXi;
+    }
+
+    /// 残差计算
+    void computeError() override {
+        VertexPose* v0 = (VertexPose*)_vertices[0];
+        Vec3d q = v0->estimate().so3() * pt_ + v0->estimate().translation();
+
+        if (query_(q, mu_, info_)) {
+            _error = q - mu_;
+            setInformation(info_);
+            valid_ = true;
+        } else {
+            valid_ = false;
+            _error.setZero();
+            setLevel(1);
+        }
+    }
+
+    /// 线性化
+    void linearizeOplus() override {
+        if (valid_) {
+            VertexPose* v0 = (VertexPose*)_vertices[0];
+            SO3 R = v0->estimate().so3();
+
+            _jacobianOplusXi.setZero();
+            _jacobianOplusXi.block<3, 3>(0, 0) = -R.matrix() * SO3::hat(pt_);  // 对R
+            _jacobianOplusXi.block<3, 3>(0, 3) = Mat3d::Identity();            // 对p
+        } else {
+            _jacobianOplusXi.setZero();
+        }
+    }
+
+    virtual bool read(std::istream& in) { return true; }
+    virtual bool write(std::ostream& out) const { return true; }
+
+   private:
+    QueryVoxelFunc query_;
+    Vec3d pt_ = Vec3d::Zero();
+    Vec3d mu_ = Vec3d::Zero();
+    Mat3d info_ = Mat3d::Identity();
+    bool valid_ = false;
+};
+
 }  // namespace lh
 
 #endif

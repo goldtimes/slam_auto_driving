@@ -281,6 +281,16 @@ inline bool PoseInterp(double query_time, C&& data, FT&& take_time_func, FP&& ta
     return true;
 }
 
+template <typename T>
+T rad2deg(const T& radians) {
+    return radians * 180.0 / M_PI;
+}
+
+template <typename T>
+T deg2rad(const T& degrees) {
+    return degrees * M_PI / 180.0;
+}
+
 }  // namespace lh::math
 
 #endif

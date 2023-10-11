@@ -78,6 +78,8 @@
         "variant": "cpp",
         "bit": "cpp",
         "execution": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "csetjmp": "cpp",
+        "slist": "cpp"
     }
 }

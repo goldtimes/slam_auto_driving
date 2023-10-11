@@ -98,7 +98,7 @@ class IncNdt3d {
      * @param v
      * @param edges
      */
-    // void BuildNDTEdges(VertexPose* v, std::vector<Edge*>& edges);
+    void BuildNDTEdges(VertexPose* v, std::vector<EdgeNDT*>& edges);
 
    private:
     /// 根据最近邻的类型，生成附近网格

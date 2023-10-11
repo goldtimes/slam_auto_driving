@@ -303,34 +303,34 @@ void IncNdt3d::ComputeResidualAndJacobians(const SE3& input_pose, Mat18d& HTVH, 
     LOG(INFO) << "effective: " << effective_num;
 }
 
-// void IncNdt3d::BuildNDTEdges(sad::VertexPose* v, std::vector<EdgeNDT*>& edges) {
-//     assert(grids_.empty() == false);
-//     SE3 pose = v->estimate();
+void IncNdt3d::BuildNDTEdges(lh::VertexPose* v, std::vector<EdgeNDT*>& edges) {
+    assert(grids_.empty() == false);
+    SE3 pose = v->estimate();
 
-//     /// 整体流程和NDT一致，只是把查询函数放到edge内部，建立和v绑定的边
-//     for (const auto& pt : source_->points) {
-//         Vec3d q = ToVec3d(pt);
-//         auto edge = new EdgeNDT(v, q, [this](const Vec3d& qs, Vec3d& mu, Mat3d& info) -> bool {
-//             Vec3i key = (qs * options_.inv_voxel_size_).cast<int>();
+    /// 整体流程和NDT一致，只是把查询函数放到edge内部，建立和v绑定的边
+    for (const auto& pt : source_->points) {
+        Vec3d q = ToVec3d(pt);
+        auto edge = new EdgeNDT(v, q, [this](const Vec3d& qs, Vec3d& mu, Mat3d& info) -> bool {
+            Vec3i key = (qs * options_.inv_voxel_size_).cast<int>();
 
-//             auto it = grids_.find(key);
-//             /// 这里要检查高斯分布是否已经估计
-//             if (it != grids_.end() && it->second->second.ndt_estimated_) {
-//                 auto& v = it->second->second;  // voxel
-//                 mu = v.mu_;
-//                 info = v.info_;
-//                 return true;
-//             } else {
-//                 return false;
-//             }
-//         });
+            auto it = grids_.find(key);
+            /// 这里要检查高斯分布是否已经估计
+            if (it != grids_.end() && it->second->second.ndt_estimated_) {
+                auto& v = it->second->second;  // voxel
+                mu = v.mu_;
+                info = v.info_;
+                return true;
+            } else {
+                return false;
+            }
+        });
 
-//         if (edge->IsValid()) {
-//             edges.emplace_back(edge);
-//         } else {
-//             delete edge;
-//         }
-//     }
-// }
+        if (edge->IsValid()) {
+            edges.emplace_back(edge);
+        } else {
+            delete edge;
+        }
+    }
+}
 
 }  // namespace lh
