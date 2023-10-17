@@ -14,6 +14,22 @@ void VoxelGrid(CloudPtr cloud, float voxel_size) {
     voxel.filter(*output);
     cloud->swap(*output);
 }
+
+/// 移除地面
+void RemoveGround(CloudPtr cloud, float z_min) {
+    CloudPtr output(new PointCloudType);
+    for (const auto &pt : cloud->points) {
+        if (pt.z > z_min) {
+            output->points.emplace_back(pt);
+        }
+    }
+
+    output->height = 1;
+    output->is_dense = false;
+    output->width = output->points.size();
+    cloud->swap(*output);
+}
+
 // 这里采用了模板函数的头文件分离，会出现问题
 template <typename CloudType>
 void SaveCloudToFile(const std::string &filePath, CloudType &cloud) {

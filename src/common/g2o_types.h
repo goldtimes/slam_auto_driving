@@ -212,6 +212,44 @@ class EdgeGNSS : public g2o::BaseUnaryEdge<6, SE3, VertexPose> {
 };
 
 /**
+ * 只有平移的GNSS
+ * 此时需要提供RTK外参 TBG，才能正确施加约束
+ */
+class EdgeGNSSTransOnly : public g2o::BaseUnaryEdge<3, Vec3d, VertexPose> {
+   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+    /**
+     * 指定位姿顶点、RTK观测 t_WG、外参TGB
+     * @param v
+     * @param obs
+     */
+    EdgeGNSSTransOnly(VertexPose* v, const Vec3d& obs, const SE3& TBG) : TBG_(TBG) {
+        setVertex(0, v);
+        setMeasurement(obs);
+    }
+
+    void computeError() override {
+        VertexPose* v = (VertexPose*)_vertices[0];
+        _error = (v->estimate() * TBG_).translation() - _measurement;
+    };
+
+    // void linearizeOplus() override {
+    //     VertexPose* v = (VertexPose*)_vertices[0];
+    //     // jacobian 6x6
+    //     _jacobianOplusXi.setZero();
+    //     _jacobianOplusXi.block<3, 3>(0, 0) = (_measurement.so3().inverse() * v->estimate().so3()).jr_inv();  // dR/dR
+    //     _jacobianOplusXi.block<3, 3>(3, 3) = Mat3d::Identity();                                              // dp/dp
+    // }
+
+    virtual bool read(std::istream& in) { return true; }
+    virtual bool write(std::ostream& out) const { return true; }
+
+   private:
+    SE3 TBG_;
+};
+
+/**
  * 3维 轮速计观测边
  * 轮速观测世界速度在自车坐标系下矢量, 3维情况下假设自车不会有y和z方向速度
  */
@@ -313,6 +351,69 @@ class EdgeNDT : public g2o::BaseUnaryEdge<3, Vec3d, VertexPose> {
     Vec3d mu_ = Vec3d::Zero();
     Mat3d info_ = Mat3d::Identity();
     bool valid_ = false;
+};
+
+/**
+ * 6 自由度相对运动
+ * 误差的平移在前，角度在后
+ * 观测：T12
+ */
+class EdgeRelativeMotion : public g2o::BaseBinaryEdge<6, SE3, VertexPose, VertexPose> {
+   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EdgeRelativeMotion() = default;
+    EdgeRelativeMotion(VertexPose* v1, VertexPose* v2, const SE3& obs) {
+        setVertex(0, v1);
+        setVertex(1, v2);
+        setMeasurement(obs);
+    }
+
+    void computeError() override {
+        VertexPose* v1 = (VertexPose*)_vertices[0];
+        VertexPose* v2 = (VertexPose*)_vertices[1];
+        SE3 T12 = v1->estimate().inverse() * v2->estimate();
+        _error = (_measurement.inverse() * v1->estimate().inverse() * v2->estimate()).log();
+    };
+
+    virtual bool read(std::istream& is) override {
+        double data[7];
+        for (int i = 0; i < 7; i++) {
+            is >> data[i];
+        }
+        Quatd q(data[6], data[3], data[4], data[5]);
+        q.normalize();
+        setMeasurement(SE3(q, Vec3d(data[0], data[1], data[2])));
+        for (int i = 0; i < information().rows() && is.good(); i++) {
+            for (int j = i; j < information().cols() && is.good(); j++) {
+                is >> information()(i, j);
+                if (i != j)
+                    information()(j, i) = information()(i, j);
+            }
+        }
+        return true;
+    }
+
+    virtual bool write(std::ostream& os) const override {
+        os << "EDGE_SE3:QUAT ";
+        auto* v1 = static_cast<VertexPose*>(_vertices[0]);
+        auto* v2 = static_cast<VertexPose*>(_vertices[1]);
+        os << v1->id() << " " << v2->id() << " ";
+        SE3 m = _measurement;
+        Eigen::Quaterniond q = m.unit_quaternion();
+        os << m.translation().transpose() << " ";
+        os << q.coeffs()[0] << " " << q.coeffs()[1] << " " << q.coeffs()[2] << " " << q.coeffs()[3] << " ";
+
+        // information matrix
+        for (int i = 0; i < information().rows(); i++) {
+            for (int j = i; j < information().cols(); j++) {
+                os << information()(i, j) << " ";
+            }
+        }
+        os << std::endl;
+        return true;
+    }
+
+   private:
 };
 
 }  // namespace lh

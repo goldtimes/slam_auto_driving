@@ -282,6 +282,45 @@ inline bool PoseInterp(double query_time, C&& data, FT&& take_time_func, FP&& ta
 }
 
 template <typename T>
+bool PoseInterp(double query_time, const std::map<double, T>& data, const std::function<SE3(const T&)>& take_pose_func, SE3& result, T& best_match) {
+    if (data.empty()) {
+        LOG(INFO) << "data is empty";
+        return false;
+    }
+
+    if (query_time > data.rbegin()->first) {
+        LOG(INFO) << "query time is later than last, " << std::setprecision(18) << ", query: " << query_time
+                  << ", end time: " << data.rbegin()->first;
+
+        return false;
+    }
+
+    auto match_iter = data.begin();
+    for (auto iter = data.begin(); iter != data.end(); ++iter) {
+        auto next_iter = iter;
+        next_iter++;
+
+        if (iter->first < query_time && next_iter->first >= query_time) {
+            match_iter = iter;
+            break;
+        }
+    }
+
+    auto match_iter_n = match_iter;
+    match_iter_n++;
+    assert(match_iter_n != data.end());
+
+    double dt = match_iter_n->first - match_iter->first;
+    double s = (query_time - match_iter->first) / dt;  // s=0 时为第一帧，s=1时为next
+
+    SE3 pose_first = take_pose_func(match_iter->second);
+    SE3 pose_next = take_pose_func(match_iter_n->second);
+    result = {pose_first.unit_quaternion().slerp(s, pose_next.unit_quaternion()), pose_first.translation() * (1 - s) + pose_next.translation() * s};
+    best_match = s < 0.5 ? match_iter->second : match_iter_n->second;
+    return true;
+}
+
+template <typename T>
 T rad2deg(const T& radians) {
     return radians * 180.0 / M_PI;
 }
