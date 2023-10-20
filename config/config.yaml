@@ -1,0 +1,10 @@
+data_path: /home/slam_auto_driving/data/icp_cloud
+target_file: /home/slam_auto_driving/data/icp_cloud/cloud-87.pcd
+source_file: /home/slam_auto_driving/data/icp_cloud/cloud-89.pcd
+ds_size: 0.005
+
+
+max_corr_dist: 1.0
+trans_eps: 0.01
+euc_fitness_eps: 0.36
+max_iter: 15
