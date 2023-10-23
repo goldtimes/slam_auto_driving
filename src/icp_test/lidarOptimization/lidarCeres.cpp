@@ -10,13 +10,15 @@ bool EdgeAnalyticCostFuntion::Evaluate(double const *const *parameters, double *
     residuals[0] = lp.x() - near_pt.x();
     residuals[1] = lp.y() - near_pt.y();
     residuals[2] = lp.z() - near_pt.z();
-
+    // 点到点的icp,可以参考高博的slam 第7章
     if (jacobians != NULL) {
+        // 反对称矩阵
         Eigen::Matrix3d skew_lp = skew(cur_pt);
         Eigen::Matrix<double, 3, 6> dp_by_se3;
         // dp_by_se3.block<3, 3>(0, 0) = -q_last_curr.matrix() * skew_lp;  //  右乘扰动
         dp_by_se3.block<3, 3>(0, 0) = -skew(q_last_curr * cur_pt);
         (dp_by_se3.block<3, 3>(0, 3)).setIdentity();
+        // 将矩阵按行优先存储RowMajor
         Eigen::Map<Eigen::Matrix<double, 3, 7, Eigen::RowMajor>> J_se3(jacobians[0]);
         J_se3.setZero();
         J_se3.block<3, 6>(0, 0) = dp_by_se3;
