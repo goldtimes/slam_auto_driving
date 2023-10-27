@@ -51,8 +51,14 @@ bool CeresIcp::P2P(const CloudPtr &source, const Eigen::Matrix4f &predict_pose, 
     source_ptr = source;
     CloudPtr transform_cloud(new PointCloud());
     Eigen::Matrix4d T = predict_pose.cast<double>();
+    // eigen map是一个引用,修改q_w_curr的值, parameters 数组的值也会变化
     q_w_curr = Eigen::Quaterniond(T.block<3, 3>(0, 0));
     t_w_curr = T.block<3, 1>(0, 3);
+    for (const auto &value : parameters) {
+        std::cout << "value: " << value << " ";
+    }
+    std::cout << "q_w_curr: \n" << q_w_curr.matrix() << std::endl;
+    std::cout << std::endl;
 
     for (int i = 0; i < max_iterations; ++i) {
         pcl::transformPointCloud(*source_ptr, *transform_cloud, T);
@@ -99,6 +105,12 @@ bool CeresIcp::P2P(const CloudPtr &source, const Eigen::Matrix4f &predict_pose, 
 
         // std::cout << "T\n"
         //           << T << std::endl;
+        for (const auto &value : parameters) {
+            std::cout << "value: " << value << " ";
+        }
+        std::cout << "q_w_curr: \n" << q_w_curr.matrix() << std::endl;
+
+        std::cout << std::endl;
     }
 
     final_pose = T.cast<float>();
@@ -120,6 +132,9 @@ bool CeresIcp::P2Plane(const CloudPtr &source, const Eigen::Matrix4f &predict_po
 
         ceres::Problem::Options problem_options;
         ceres::Problem problem(problem_options);
+        ceres::LocalParameterization *q_parameterization = new ceres::EigenQuaternionParameterization();
+        problem.AddParameterBlock(parameters, 4, q_parameterization);
+        problem.AddParameterBlock(parameters + 4, 3);
         // 添加带优化的变量, PoseSE3Parameterization继承了localparam, 告诉雅克比矩阵的计算和误差的相加
         // problem.AddParameterBlock(parameters, 7, new test_ceres::PoseSE3Parameterization());
         int effect_num = 0;
@@ -180,7 +195,7 @@ bool CeresIcp::P2Plane(const CloudPtr &source, const Eigen::Matrix4f &predict_po
         }
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::DENSE_QR;
-        options.max_num_iterations = 10;
+        options.max_num_iterations = 30;
         options.minimizer_progress_to_stdout = false;
         options.check_gradients = false;
         options.gradient_check_relative_precision = 1e-4;
@@ -188,12 +203,17 @@ bool CeresIcp::P2Plane(const CloudPtr &source, const Eigen::Matrix4f &predict_po
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
 
+        for (const auto &value : parameters) {
+            std::cout << "value: " << value << " ";
+        }
+        std::cout << std::endl;
         T.setIdentity();
         T.block<3, 1>(0, 3) = t_w_curr;
         T.block<3, 3>(0, 0) = q_w_curr.toRotationMatrix();
     }
     final_pose = T.cast<float>();
     result_pose = T.cast<float>();
-    // pcl::transformPointCloud(*source_ptr, *transformed_source_ptr, result_pose);
+
+    std::cout << std::endl;
     return true;
 }
