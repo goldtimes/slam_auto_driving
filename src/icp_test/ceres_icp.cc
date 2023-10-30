@@ -26,6 +26,34 @@ bool FitPlane(std::vector<Eigen::Matrix<S, 3, 1>> &data, Eigen::Matrix<S, 4, 1> 
     return true;
 }
 
+bool ALOMFitPlane(const std::vector<Eigen::Vector3d> &points, Eigen::Vector3d &norm, double &negative_OA_dot_norm) {
+    Eigen::Matrix<double, 5, 3> matA0;
+    Eigen::Matrix<double, 5, 1> matB0 = -1 * Eigen::Matrix<double, 5, 1>::Ones();
+    for (int i = 0; i < points.size(); ++i) {
+        matA0(i, 0) = points[i][0];
+        matA0(i, 1) = points[i][1];
+        matA0(i, 2) = points[i][2];
+    }
+    auto result_norm = matA0.colPivHouseholderQr().solve(matB0);
+    // std::cout << "alom plane norm: \n" << result_norm.transpose() << std::endl;
+    negative_OA_dot_norm = 1 / norm.norm();
+    // std::cout << "negative_OA_dot_norm: " << negative_OA_dot_norm << std::endl;
+    result_norm.normalized();
+
+    norm = result_norm.normalized();
+    // std::cout << "norm normalized: \n" << norm.transpose() << std::endl;
+    // 判断平面
+    bool planeValid = true;
+    for (int j = 0; j < 5; j++) {
+        // if OX * n > 0.2, then plane is not fit well
+        if (fabs(norm(0) * points[j][0] + norm(1) * points[j][1] + norm(2) * points[j][2] + negative_OA_dot_norm) > 0.2) {
+            planeValid = false;
+            break;
+        }
+    }
+    return planeValid;
+}
+
 CeresIcp::CeresIcp(const YAML::Node &node) : kdtree_flann(new pcl::KdTreeFLANN<PointType>) {
     max_coresspoind_dis = node["max_corr_dist"].as<double>();
     trans_eps = node["trans_eps"].as<double>();
@@ -168,24 +196,33 @@ bool CeresIcp::P2Plane(const CloudPtr &source, const Eigen::Matrix4f &predict_po
                 for (int k = 0; k < indices.size(); ++k) {
                     nn_eigen.emplace_back(ToVec3d(target_ptr->points[indices[k]]));
                 }
+                // 测试alom方法获得的法向量
+                // Eigen::Vector3d alom_n;
+                // double negative_OA_dot_norm;
+                // if (!ALOMFitPlane(nn_eigen, alom_n, negative_OA_dot_norm)) {
+                //     continue;
+                // }
                 // 获取平面的法向量
                 Eigen::Vector4d n;
                 if (!FitPlane(nn_eigen, n)) {
                     effect_pts[j] = false;
                     continue;
                 }
+                // std::cout << "plane norm: \n" << n.transpose() << std::endl;
                 // transform_pt 距离平面的误差
                 Eigen::Vector3d pt = ToVec3d(transform_pt);
                 double e = n.head<3>().dot(pt) + n[3];
                 // std::cout << "e: " << e << std::endl;
                 // 点到平面的距离
-                if (fabs(e) > 0.05) {
+                if (fabs(e) > 0.2) {
                     effect_pts[j] = false;
                     continue;
                 }
                 // 平面拟合成功且误差距离小给定的阈值
                 effect_pts[j] = true;
+
                 // 构建优化问题
+                // ceres::CostFunction *cost_function = LidarPlaneNormFactor::Create(origin_pt_v3d, alom_n, negative_OA_dot_norm);
                 ceres::CostFunction *cost_function = LidarPlaneNormFactor::Create(origin_pt_v3d, n.head<3>(), n[3]);
                 problem.AddResidualBlock(cost_function, nullptr, parameters, parameters + 4);
                 effect_num++;
@@ -195,8 +232,8 @@ bool CeresIcp::P2Plane(const CloudPtr &source, const Eigen::Matrix4f &predict_po
         }
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::DENSE_QR;
-        options.max_num_iterations = 30;
-        options.minimizer_progress_to_stdout = false;
+        options.max_num_iterations = 10;
+        options.minimizer_progress_to_stdout = true;
         options.check_gradients = false;
         options.gradient_check_relative_precision = 1e-4;
 
@@ -210,6 +247,9 @@ bool CeresIcp::P2Plane(const CloudPtr &source, const Eigen::Matrix4f &predict_po
         T.setIdentity();
         T.block<3, 1>(0, 3) = t_w_curr;
         T.block<3, 3>(0, 0) = q_w_curr.toRotationMatrix();
+        if (summary.final_cost < 0.02) {
+            break;
+        }
     }
     final_pose = T.cast<float>();
     result_pose = T.cast<float>();

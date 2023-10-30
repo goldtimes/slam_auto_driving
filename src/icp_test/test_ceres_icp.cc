@@ -64,10 +64,10 @@ int main(int argc, char** argv) {
     // std::cout << "after p2p T: \n" << T << std::endl;
 
     Eigen::Matrix4f predict_pose = Eigen::Matrix4f::Identity();
-    Eigen::AngleAxisf new_r_z(M_PI / 60, Eigen::Vector3f(0, 0, 1));
-    Eigen::AngleAxisf new_r_x(M_PI / 150, Eigen::Vector3f(1, 0, 0));
-    predict_pose.block<3, 3>(0, 0) = (new_r_x * new_r_z).matrix();
-    predict_pose.block<3, 1>(0, 3) = Eigen::Vector3f(0.05, -0.20, 0.1);
+    // Eigen::AngleAxisf new_r_z(M_PI / 60, Eigen::Vector3f(0, 0, 1));
+    // Eigen::AngleAxisf new_r_x(M_PI / 150, Eigen::Vector3f(1, 0, 0));
+    // predict_pose.block<3, 3>(0, 0) = (new_r_x * new_r_z).matrix();
+    // predict_pose.block<3, 1>(0, 3) = Eigen::Vector3f(0.05, -0.20, 0.1);
     Eigen::Matrix4f T_p;
     icp->P2Plane(cloud_source, predict_pose, transformed_source, T_p);
     std::cout << "after p2plan T: \n" << T_p << std::endl;
