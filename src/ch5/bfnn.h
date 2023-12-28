@@ -37,8 +37,7 @@ void bfnn_cloud(CloudPtr cloud1, CloudPtr cloud2, std::vector<std::pair<size_t, 
  * @param cloud2
  * @param matches
  */
-void bfnn_cloud_mt(CloudPtr cloud1, CloudPtr cloud2,
-                   std::vector<std::pair<size_t, size_t>>& matches);
+void bfnn_cloud_mt(CloudPtr cloud1, CloudPtr cloud2, std::vector<std::pair<size_t, size_t>>& matches);
 
 /**
  * 对点云进行BF最近邻 多线程版本，k近邻
@@ -46,8 +45,7 @@ void bfnn_cloud_mt(CloudPtr cloud1, CloudPtr cloud2,
  * @param cloud2
  * @param matches
  */
-void bfnn_cloud_mt_k(CloudPtr cloud1, CloudPtr cloud2,
-                     std::vector<std::pair<size_t, size_t>>& matches, int k = 5);
+void bfnn_cloud_mt_k(CloudPtr cloud1, CloudPtr cloud2, std::vector<std::pair<size_t, size_t>>& matches, int k = 5);
 }  // namespace lh
 
 #endif
