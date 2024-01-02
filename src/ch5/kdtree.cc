@@ -179,6 +179,7 @@ bool KdTree::FindSplitAxisAndThresh(const IndexVec &point_idx, int &axis, float 
     Vec3f mean;
     math::ComputeMeanAndCovDiag(point_idx, mean, var, [this](int idx) { return cloud_[idx]; });
     int max_i, max_j;
+    // 获取最大数的行,列
     var.maxCoeff(&max_i, &max_j);
     axis = max_i;
     th = mean[axis];

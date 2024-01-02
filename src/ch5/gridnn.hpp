@@ -60,7 +60,7 @@ class GridNN {
     float resolution_;
     float inv_resolution_;
     NearbyType nearby_type_ = NearbyType::NEARBY4;
-
+    // keytype是grid的某个格子, 格子存放了多少个点云
     std::unordered_map<KeyType, std::vector<size_t>, hash_vec<dim>> grids_;  // 栅格数据
     CloudPtr cloud_;
     std::vector<KeyType> nearby_grids_;  // 附近栅格
@@ -89,6 +89,8 @@ bool GridNN<dim>::SetPointCloud(CloudPtr cloud) {
 
 template <int dim>
 Eigen::Matrix<int, dim, 1> GridNN<dim>::Pos2Grid(const Eigen::Matrix<float, dim, 1>& pt) {
+    // 分辨率为0.1, 1 / 0.1 = 10  1米10个格子
+    // int(1.1 * 10) = int(1.2 * 10)
     return (pt * inv_resolution_).template cast<int>();
 }
 
@@ -123,10 +125,13 @@ bool GridNN<dim>::GetClosestPoint(const PointType& pt, PointType& closest_pt, si
     auto key = Pos2Grid(ToEigen<float, dim>(pt));
     // pt点周围的栅格
     std::for_each(nearby_grids_.begin(), nearby_grids_.end(), [&key, &idx_to_check, this](const KeyType& delta) {
+        // 当前点+周围的点
         auto dkey = key + delta;
+        // 找到迭代器
         auto iter = grids_.find(dkey);
-        // 找到了
+        // 找到迭代器
         if (iter != grids_.end()) {
+            // 点云的下标
             idx_to_check.insert(idx_to_check.end(), iter->second.begin(), iter->second.end());
         }
     });
@@ -138,10 +143,11 @@ bool GridNN<dim>::GetClosestPoint(const PointType& pt, PointType& closest_pt, si
     CloudPtr nearby_cloud(new PointCloudType);
     std::vector<size_t> nearby_idx;
     for (auto& idx : idx_to_check) {
+        // 构建点云
         nearby_cloud->points.template emplace_back(cloud_->points[idx]);
         nearby_idx.emplace_back(idx);
     }
-
+    // 先通过栅格/体素化找到pt周围的点云,再通过暴力查找的方式遍历周围点,减少了很多无效的遍历点
     size_t closest_point_idx = bfnn_point(nearby_cloud, ToVec3f(pt));
     idx = nearby_idx.at(closest_point_idx);
     closest_pt = cloud_->points[idx];
@@ -157,6 +163,7 @@ bool GridNN<dim>::GetClosestPointForCloud(CloudPtr ref, CloudPtr query, std::vec
         PointType cp;
         size_t cp_idx;
         if (GetClosestPoint(query->points[idx], cp, cp_idx)) {
+            // 邻近的点云的点和它的下标
             matches.emplace_back(cp_idx, idx);
         }
     });
