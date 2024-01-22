@@ -12,10 +12,9 @@ namespace lh {
 
 class IMUIntegration {
    public:
-    IMUIntegration(const Vec3d& gravity, const Vec3d& init_bg, const Vec3d& init_ba)
-        : gravity_(gravity), bg_(init_bg), ba_(init_ba) {}
+    IMUIntegration(const Vec3d& gravity, const Vec3d& init_bg, const Vec3d& init_ba) : gravity_(gravity), bg_(init_bg), ba_(init_ba) {}
 
-    // 增加imu读书
+    // 增加imu数据
     void AddImu(const IMU& imu) {
         double dt = imu.timestamp_ - timestamp_;
         if (dt > 0 && dt < 0.1) {
