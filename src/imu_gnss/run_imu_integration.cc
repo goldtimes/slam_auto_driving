@@ -1,11 +1,11 @@
 #include <glog/logging.h>
 #include <iomanip>
 
-#include "ch3/imu_integration.hh"
 #include "common/io_utils.h"
+#include "imu_gnss/imu_integration.hh"
 #include "tools/ui/pangolin_window.h"
 
-DEFINE_string(imu_txt_path, "./data/ch3/10.txt", "数据文件");
+DEFINE_string(imu_txt_path, "/home/slam_auto_driving/data/ch3/10.txt", "数据文件");
 DEFINE_bool(with_ui, true, "是否显示图形界面");
 
 int main(int argc, char** argv) {
