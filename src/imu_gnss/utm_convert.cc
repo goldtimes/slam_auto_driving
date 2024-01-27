@@ -25,7 +25,7 @@ bool UTM2LatLon(const UTMCoordinate& utm_coor, Vec2d& latlon) {
     return ret == 0;
 }
 
-bool ConvertGps2UTM(GNSS& gnss_reading, const Vec2d& antenna_pos, const double antenna_angle, const Vec3d& map_origin = Vec3d::Zero()) {
+bool ConvertGps2UTM(GNSS& gnss_reading, const Vec2d& antenna_pos, const double antenna_angle, const Vec3d& map_origin) {
     UTMCoordinate utm_rtk;
     if (!LatLon2UTM(gnss_reading.lat_lon_alt_.head<2>(), utm_rtk)) {
         return false;
