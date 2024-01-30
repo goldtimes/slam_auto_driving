@@ -86,4 +86,9 @@ inline CloudPtr VoxelCloud(CloudPtr cloud, float voxel_size = 0.1) {
     return output;
 }
 
+template <typename S, int n>
+inline Eigen::Matrix<int, n, 1> CastToInt(const Eigen::Matrix<S, n, 1>& value) {
+    return value.array().template round().template cast<int>();
+}
+
 }  // namespace lh
