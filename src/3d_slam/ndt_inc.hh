@@ -12,20 +12,6 @@ enum class NearbyType {
     NEARBY6,  // 上下左右前后
 };
 
-struct Options {
-    int max_iteration_ = 4;        // 最大迭代次数
-    double voxel_size_ = 1.0;      // 体素大小
-    double inv_voxel_size_ = 1.0;  // 体素大小之逆
-    int min_effective_pts_ = 10;   // 最近邻点数阈值
-    int min_pts_in_voxel_ = 5;     // 每个栅格中最小点数
-    int max_pts_in_voxel_ = 50;    // 每个栅格中最大点数
-    double eps_ = 1e-3;            // 收敛判定条件
-    double res_outlier_th_ = 5.0;  // 异常值拒绝阈值
-    size_t capacity_ = 1e5;        // 缓存的体素数量
-
-    NearbyType nearby_type_ = NearbyType::NEARBY6;
-};
-
 // 体素的坐标,存放在map中的key
 using VOXEL_LOC = Eigen::Matrix<int, 3, 1>;
 
@@ -55,11 +41,24 @@ struct VoxelData {
 
 class IncNdt3d {
    public:
+    struct Options {
+        int max_iteration_ = 4;        // 最大迭代次数
+        double voxel_size_ = 1.0;      // 体素大小
+        double inv_voxel_size_ = 1.0;  // 体素大小之逆
+        int min_effective_pts_ = 10;   // 最近邻点数阈值
+        int min_pts_in_voxel_ = 5;     // 每个栅格中最小点数
+        int max_pts_in_voxel_ = 50;    // 每个栅格中最大点数
+        double eps_ = 1e-3;            // 收敛判定条件
+        double res_outlier_th_ = 5.0;  // 异常值拒绝阈值
+        size_t capacity_ = 1e5;        // 缓存的体素数量
+
+        NearbyType nearby_type_ = NearbyType::NEARBY6;
+    };
     IncNdt3d() {
         options_.inv_voxel_size_ = 1.0 / options_.voxel_size_;
         GenerateNearbyGrids();
     }
-    IncNdt3d(Options options = Options()) {
+    IncNdt3d(Options options) {
         options_.inv_voxel_size_ = 1.0 / options_.voxel_size_;
         GenerateNearbyGrids();
     }
