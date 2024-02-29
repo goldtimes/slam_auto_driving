@@ -78,8 +78,11 @@ bool ICP3D::AlignP2P(SE3& init_pose) {
         }
 
         Mat6d H = H_and_err.first;
+        // err is g
         Vec6d err = H_and_err.second;
-
+        // H * deltaX = g
+        // H = J^t * J, g = -J * errors
+        // deltaX = H.inverse() * g
         Vec6d dx = H.inverse() * err;
         pose.so3() = pose.so3() * SO3::exp(dx.head<3>());
         pose.translation() += dx.tail<3>();
